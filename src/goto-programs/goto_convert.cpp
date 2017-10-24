@@ -338,11 +338,46 @@ void goto_convertt::convert_label(
   // magic thread creation label?
   if(has_prefix(id2string(label), "__CPROVER_ASYNC_"))
   {
-    // this is like a START_THREAD
-    codet tmp_code(ID_start_thread);
-    tmp_code.copy_to_operands(code.op0());
-    tmp_code.add_source_location()=code.source_location();
-    convert(tmp_code, tmp);
+    // A: START_THREAD : C
+    // B: GOTO Z
+    // C  SKIP
+    // D: BLOCK
+    // E: END_THREAD
+    // Z: SKIP
+
+    thread_started_counter+=1;
+    const std::string &lbl1 = "TS_" +
+      std::to_string(thread_started_counter);
+    thread_started_counter+=1;
+    const std::string &lbl2 = "TS_" +
+      std::to_string(thread_started_counter);
+
+    codet tmp_a(ID_start_thread);
+    tmp_a.set(ID_destination, lbl1);
+
+    code_gotot tmp_b(lbl2);
+
+    code_labelt tmp_c(lbl1);
+    tmp_c.op0() = codet(ID_skip);
+
+    code_blockt tmp_d;
+    tmp_d.add(to_code(code.op0()));
+
+    codet tmp_e(ID_end_thread);
+
+    code_labelt tmp_z(lbl2);
+    tmp_z.op0() = codet(ID_skip);
+
+    code_blockt block;
+    block.add_source_location()=code.source_location();
+    block.add(tmp_a);
+    block.add(tmp_b);
+    block.add(tmp_c);
+    block.append(tmp_d);
+    block.add(tmp_e);
+    block.add(tmp_z);
+
+    convert(block, tmp);
   }
   else
     convert(to_code(code.op0()), tmp);
@@ -1531,39 +1566,14 @@ void goto_convertt::convert_start_thread(
   const codet &code,
   goto_programt &dest)
 {
-  if(code.operands().size()!=1)
-  {
-    error().source_location=code.find_source_location();
-    error() << "start_thread expects one operand" << eom;
-    throw 0;
-  }
-
   goto_programt::targett start_thread=
     dest.add_instruction(START_THREAD);
-
   start_thread->source_location=code.source_location();
+  start_thread->code=code;
 
-  {
-    // start_thread label;
-    // goto tmp;
-    // label: op0-code
-    // end_thread
-    // tmp: skip
-
-    goto_programt::targett goto_instruction=dest.add_instruction(GOTO);
-    goto_instruction->guard=true_exprt();
-    goto_instruction->source_location=code.source_location();
-
-    goto_programt tmp;
-    convert(to_code(code.op0()), tmp);
-    goto_programt::targett end_thread=tmp.add_instruction(END_THREAD);
-    end_thread->source_location=code.source_location();
-
-    start_thread->targets.push_back(tmp.instructions.begin());
-    dest.destructive_append(tmp);
-    goto_instruction->targets.push_back(dest.add_instruction(SKIP));
-    dest.instructions.back().source_location=code.source_location();
-  }
+  // remember it to do target later
+  targets.gotos.push_back(
+    std::make_pair(start_thread, targets.destructor_stack));
 }
 
 void goto_convertt::convert_end_thread(

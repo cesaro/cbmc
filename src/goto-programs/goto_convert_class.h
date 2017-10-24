@@ -35,6 +35,7 @@ public:
     symbol_table(_symbol_table),
     ns(_symbol_table),
     temporary_counter(0),
+    thread_started_counter(0),
     tmp_symbol_prefix("goto_convertt")
   {
   }
@@ -47,6 +48,7 @@ protected:
   symbol_tablet &symbol_table;
   namespacet ns;
   unsigned temporary_counter;
+  unsigned thread_started_counter;
   std::string tmp_symbol_prefix;
 
   void goto_convert_rec(const codet &code, goto_programt &dest);
