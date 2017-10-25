@@ -2413,7 +2413,7 @@ codet java_bytecode_convert_methodt::convert_instructions(
       type.parameters().resize(1);
       type.parameters()[0].type()=java_reference_type(void_typet());
       code_function_callt call;
-      call.function()=symbol_exprt("java::monitorenter", type);
+      call.function()=symbol_exprt("java::org.cprover::monitorenter", type);
       call.lhs().make_nil();
       call.arguments().push_back(op[0]);
       call.add_source_location()=i_it->source_location;
@@ -2427,7 +2427,7 @@ codet java_bytecode_convert_methodt::convert_instructions(
       type.parameters().resize(1);
       type.parameters()[0].type()=java_reference_type(void_typet());
       code_function_callt call;
-      call.function()=symbol_exprt("java::monitorexit", type);
+      call.function()=symbol_exprt("java::org.cprover::monitorexit", type);
       call.lhs().make_nil();
       call.arguments().push_back(op[0]);
       call.add_source_location()=i_it->source_location;
@@ -2804,6 +2804,8 @@ void java_bytecode_convert_method(
     "nondetWithNull",
     "nondetWithoutNull",
     "notModelled",
+    "atomic_begin",
+    "atomic_end"
   };
 
   if(std::regex_match(

@@ -187,6 +187,21 @@ bool java_bytecode_languaget::typecheck(
   if(string_refinement_enabled)
     string_preprocess.initialize_conversion_table();
 
+  // Must load object first to avoid stubbing
+  java_class_loadert::class_mapt::const_iterator it=java_class_loader.class_map.find("java.lang.Object");
+  if (it!=java_class_loader.class_map.end())
+  {
+    if(java_bytecode_convert_class(
+     it->second,
+     symbol_table,
+     get_message_handler(),
+     max_user_array_length,
+     lazy_methods,
+     lazy_methods_mode,
+     string_preprocess))
+       return true;
+  }
+
   // first generate a new struct symbol for each class and a new function symbol
   // for every method
   for(java_class_loadert::class_mapt::const_iterator

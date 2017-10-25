@@ -4,6 +4,7 @@ public final class CProver
 {
   public static boolean enableAssume=true;
   public static boolean enableNondet=true;
+  public static boolean enableAtomic=true;
 
   public static boolean nondetBoolean()
   {
@@ -121,5 +122,35 @@ public final class CProver
     {
       throw new RuntimeException("CProver.assume() predicate is false");
     }
+  }
+
+  public static void atomic_begin()
+  {
+    if(enableAtomic)
+    {
+      throw new RuntimeException(
+          "Cannot execute program with CProver.atomic_begin()");
+    }
+  }
+
+  public static void atomic_end()
+  {
+    if(enableAtomic)
+    {
+      throw new RuntimeException(
+          "Cannot execute program with CProver.atomic_end()");
+    }
+  }
+
+  public static void monitorenter(Object object)
+  {
+    atomic_begin();
+    atomic_end();
+  }
+
+  public static void monitorexit(Object object)
+  {
+    atomic_begin();
+    atomic_end();
   }
 }

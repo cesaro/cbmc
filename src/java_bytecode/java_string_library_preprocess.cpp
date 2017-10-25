@@ -23,6 +23,9 @@ Date:   April 2017
 #include <util/refined_string_type.h>
 #include <util/string_expr.h>
 #include <util/c_types.h>
+#include <util/namespace.h>
+
+#include <linking/zero_initializer.h>
 
 #include "java_types.h"
 #include "java_object_factory.h"
@@ -710,13 +713,23 @@ codet java_string_library_preprocesst::code_assign_components_to_java_string(
 
   code_blockt code;
 
-  // A String has a field Object with @clsid = String and @lock = false:
+  // A String has a field Object with @clsid = String:
   const symbolt &jlo_symbol=*symbol_table.lookup("java::java.lang.Object");
   const struct_typet &jlo_struct=to_struct_type(jlo_symbol.type);
   struct_exprt jlo_init(jlo_struct);
   jlo_init.copy_to_operands(constant_exprt(
     "java::java.lang.String", jlo_struct.components()[0].type()));
-  jlo_init.copy_to_operands(from_integer(0, jlo_struct.components()[1].type()));
+
+  // Used to be a fixed size, but now we take any fields added to
+  // the java.lang.object model. Non-basic data types will be filled
+  // with nil.
+  for(const auto &comp : jlo_struct.components())
+  {
+    if(comp.get_name()=="@class_identifier")
+      continue;
+    jlo_init.copy_to_operands(
+      zero_initializer(comp.type(), lhs.source_location(), namespacet(symbol_table)));
+  }
 
   struct_exprt struct_rhs(deref.type());
   struct_rhs.copy_to_operands(jlo_init);

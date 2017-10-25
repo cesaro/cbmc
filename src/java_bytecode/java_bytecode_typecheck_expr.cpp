@@ -129,7 +129,7 @@ void java_bytecode_typecheckt::typecheck_expr_java_string_literal(exprt &expr)
   new_symbol.is_static_lifetime=true; // These are basically const global data.
 
   // Regardless of string refinement setting, at least initialize
-  // the literal with @clsid = String and @lock = false:
+  // the literal with @clsid = String:
   symbol_typet jlo_symbol("java::java.lang.Object");
   const auto &jlo_struct=to_struct_type(ns.follow(jlo_symbol));
   struct_exprt jlo_init(jlo_symbol);
@@ -139,10 +139,17 @@ void java_bytecode_typecheckt::typecheck_expr_java_string_literal(exprt &expr)
     constant_exprt(
       "java::java.lang.String",
       jlo_struct.components()[0].type()));
-  jlo_init.copy_to_operands(
-    from_integer(
-      0,
-      jlo_struct.components()[1].type()));
+
+  // Used to be a fixed size, but now we take any fields added to
+  // the java.lang.object model. Non-basic data types will be filled
+  // with nil.
+  for(const auto &comp : jlo_struct.components())
+  {
+    if(comp.get_name()=="@class_identifier")
+      continue;
+    jlo_init.copy_to_operands(
+      zero_initializer(comp.type(), expr.source_location(), ns));
+  }
 
   // If string refinement *is* around, populate the actual
   // contents as well:
@@ -202,7 +209,7 @@ void java_bytecode_typecheckt::typecheck_expr_java_string_literal(exprt &expr)
   else if(jls_struct.get_bool(ID_incomplete_class))
   {
     // Case where java.lang.String was stubbed, and so directly defines
-    // @class_identifier and @lock:
+    // @class_identifier:
     new_symbol.value=jlo_init;
   }
 

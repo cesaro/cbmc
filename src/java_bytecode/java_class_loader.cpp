@@ -24,17 +24,27 @@ java_bytecode_parse_treet &java_class_loadert::operator()(
 {
   std::stack<irep_idt> queue;
 
-  // Always require java.lang.Object, as it is the base of
-  // internal classes such as array types.
-  queue.push("java.lang.Object");
-  // java.lang.String
-  queue.push("java.lang.String");
-  // add java.lang.Class
-  queue.push("java.lang.Class");
+  queue.push(class_name);
+
+  // Add the necessary classes in reverse order
+  // since this is a FILO
+
+  // add built-in-functions
+  queue.push("org.cprover.CProver");
+
   // Require java.lang.Throwable as the catch-type used for
   // universal exception handlers:
   queue.push("java.lang.Throwable");
-  queue.push(class_name);
+
+  // add java.lang.Class
+  queue.push("java.lang.Class");
+
+  // java.lang.String
+  queue.push("java.lang.String");
+
+  // Always require java.lang.Object, as it is the base of
+  // internal classes such as array types.
+  queue.push("java.lang.Object");
 
   java_class_loader_limitt class_loader_limit(
     get_message_handler(), java_cp_include_files);
