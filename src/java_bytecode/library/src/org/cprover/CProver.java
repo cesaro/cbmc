@@ -5,6 +5,7 @@ public final class CProver
 {
   public static boolean enableAssume=true;
   public static boolean enableNondet=true;
+  public static boolean enableConcurrency=true;
 
   public static boolean nondetBoolean()
   {
@@ -116,6 +117,25 @@ public final class CProver
     return null;
   }
 
+
+  public static void startThread(int id)
+  {
+    if(enableConcurrency)
+    {
+      throw new RuntimeException(
+          "Cannot execute program with CProver.startThread()");
+    }
+  }
+
+  public static void endThread(int id)
+  {
+    if(enableConcurrency)
+    {
+      throw new RuntimeException(
+          "Cannot execute program with CProver.endThread()");
+    }
+  }
+
   public static void assume(boolean condition)
   {
     if(enableAssume && !condition)
@@ -123,6 +143,25 @@ public final class CProver
       throw new RuntimeException("CProver.assume() predicate is false");
     }
   }
+
+  public static void atomicBegin()
+  {
+    if(enableConcurrency)
+    {
+      throw new RuntimeException(
+          "Cannot execute program with CProver.atomicBegin()");
+    }
+  }
+
+  public static void atomicEnd()
+  {
+    if(enableConcurrency)
+    {
+      throw new RuntimeException(
+          "Cannot execute program with CProver.atomicEnd()");
+    }
+  }
+
 
   /**
    * If this method is found in the test-gen trace for a particular trace,
