@@ -2994,7 +2994,8 @@ void java_bytecode_convert_method(
     "atomicBegin",
     "atomicEnd"
     "startThread",
-    "endThread"
+    "endThread",
+    "getCurrentThreadID"
   };
 
   if(std::regex_match(
