@@ -335,7 +335,7 @@ void goto_convertt::convert_label(
 
   goto_programt tmp;
 
-  // magic thread creation label?
+  // magic thread creation label, see ansi-c/library/pthread_lib.c
   if(has_prefix(id2string(label), "__CPROVER_ASYNC_"))
   {
     // A: START_THREAD : C
