@@ -271,6 +271,24 @@ protected:
     const typet &,
     code_blockt &,
     exprt &);
+
+  enum class clinit_statest {NOT_INIT, IN_PROGRESS, RETURN};
+  static symbolt add_new_symbol(
+    symbol_tablet& symbol_table,
+    const irep_idt& name,
+    const irep_idt& base_name,
+    const typet& type,
+    const exprt& value,
+    const bool is_static_lifetime,
+    const bool is_thread_local);
+
+  static equal_exprt gen_clinit_eqexpr(
+    const exprt& symbol_expr,
+    const clinit_statest state);
+
+  static code_assignt gen_clinit_assignexpr(
+    const exprt& symbol_expr,
+    const clinit_statest state);
 };
 
 #endif
