@@ -975,6 +975,41 @@ bool java_bytecode_convert_methodt::class_needs_clinit(
 /// called. The wrapper method checks whether static init has already taken
 /// place, calls the actual <clinit> method if not, and initializes super-
 /// classes and interfaces.
+///
+/// Note: The current implementation does not deal with exceptions.
+/// Note two: 'was_ready' may seem unnecessary  at first, but it is
+///            needed to avoid a infinite recursion in the symex.
+///
+/// The following code is generated inside this method:
+///
+/// bool was_ready;
+/// if(C::__CPROVER_clinit_local_state == RETURN) return;
+///
+/// ATOMIC_BEGIN
+/// Assume(C::__CPROVER_clinit_state != IN_PROGRESS)
+/// If(C::__CPROVER_clinit_state==NOT_INIT) {
+///   C::__CPROVER_clinit_state=IN_PROGRESS
+///   was_ready=false;
+/// }
+/// else If(C::__CPROVER_clinit_state==READY) {
+///   was_ready=true
+/// }
+/// ATOMIC_END
+///
+/// if(was_ready) return;
+///
+/// C'::<clinit>();  // C' = superclass of C
+/// l_1::<clinit>()
+/// ...
+/// l_n::<clinit>()
+///
+/// C::<clinit>();
+/// ATOMIC_START
+/// C::__CPROVER_clinit_state=RETURN;
+/// ATOMIC_END
+/// C::__CPROVER_clinit_local_state=RETURN;
+/// return;
+///
 /// \param classname: Class name
 /// \return Returns a symbol_exprt pointing to the given class' clinit wrapper
 ///   if one is required, or nil otherwise.
@@ -984,74 +1019,136 @@ exprt java_bytecode_convert_methodt::get_or_create_clinit_wrapper(
   if(!class_needs_clinit(classname))
     return static_cast<const exprt &>(get_nil_irep());
 
-  // if the symbol table already contains the clinit_wrapper() function, return
-  // it
+  // if the symbol table contains the clinit_wrapper() function, return it
   const irep_idt &clinit_wrapper_name=
     id2string(classname)+"::clinit_wrapper";
   auto findit=symbol_table.symbols.find(clinit_wrapper_name);
   if(findit!=symbol_table.symbols.end())
     return findit->second.symbol_expr();
 
-  // Otherwise, assume that class C extends class C' and implements interfaces
-  // I1, ..., In. We now create the following function (possibly recursively
-  // creating the clinit_wrapper functions for C' and I1, ..., In):
-  //
-  // java::C::clinit_wrapper()
-  // {
-  //   if (java::C::clinit_already_run == false)
-  //   {
-  //     java::C::clinit_already_run = true; // before recursive calls!
-  //
-  //     java::C'::clinit_wrapper();
-  //     java::I1::clinit_wrapper();
-  //     java::I2::clinit_wrapper();
-  //     // ...
-  //     java::In::clinit_wrapper();
-  //
-  //     java::C::<clinit>();
-  //   }
-  // }
-  const irep_idt &already_run_name=
-    id2string(classname)+"::clinit_already_run";
-  symbolt already_run_symbol;
-  already_run_symbol.name=already_run_name;
-  already_run_symbol.pretty_name=already_run_name;
-  already_run_symbol.base_name="clinit_already_run";
-  already_run_symbol.type=bool_typet();
-  already_run_symbol.value=false_exprt();
-  already_run_symbol.is_lvalue=true;
-  already_run_symbol.is_state_var=true;
-  already_run_symbol.is_static_lifetime=true;
-  already_run_symbol.mode=ID_java;
-  symbol_table.add(already_run_symbol);
+  mp_integer initv((int)clinit_statest::NOT_INIT);
+  constant_exprt init_s=from_integer(initv, java_int_type());
 
-  equal_exprt check_already_run(
-    already_run_symbol.symbol_expr(),
-    false_exprt());
+  // create wo global static state variables.
+  const symbolt& clinit_s_sym=add_new_symbol(symbol_table,
+    id2string(classname)+"::__CPROVER_clinit_state",
+    "__CPROVER_clinit_state",
+     java_int_type(),
+     init_s,
+     false, true);
+  const symbolt& clinit_s_local_sym=add_new_symbol(symbol_table,
+    id2string(classname)+"::__CPROVER_clinit_local_state",
+    "__CPROVER_clinit_local_state",
+     java_int_type(),
+     init_s,
+     true, true);
 
-  // the entire body of the function is an if-then-else
-  code_ifthenelset wrapper_body;
-
-  // add the condition to the if
-  wrapper_body.cond()=check_already_run;
-
-  // add the "already-run = false" statement
-  code_blockt init_body;
-  code_assignt set_already_run(already_run_symbol.symbol_expr(), true_exprt());
-  init_body.move_to_operands(set_already_run);
-
-  // iterate through the base types and add recursive calls to the
-  // clinit_wrapper()
-  const symbolt &class_symbol=*symbol_table.lookup(classname);
-  for(const auto &base : to_class_type(class_symbol.type).bases())
+  // create/reuse local variable.
+  auto findit2=symbol_table.symbols.find("__CPROVER_was_ready");
+  symbolt bool_local;
+  if(findit==symbol_table.symbols.end())
   {
-    const auto base_name=to_symbol_type(base.type()).get_identifier();
-    exprt base_init_routine=get_or_create_clinit_wrapper(base_name);
-    if(base_init_routine.is_nil())
-      continue;
-    code_function_callt call_base;
-    call_base.function()=base_init_routine;
-    init_body.move_to_operands(call_base);
+    bool_local=add_new_symbol(symbol_table,
+      "__CPROVER_was_ready","__CPROVER_was_ready",
+      bool_typet(), false_exprt(), false, false);
+  }
+  else
+  {
+    bool_local=findit2->second;
+  }
+
+  code_blockt function_body;
+  codet sym_exec_lock(ID_atomic_begin);
+  codet sym_exec_lock_end(ID_atomic_end);
+
+  // bool was_ready;
+  {
+    code_declt decl(bool_local.symbol_expr());
+    function_body.add(decl);
+  }
+
+  // if(C::__CPROVER_local_state == RETURN) return;
+  {
+    code_ifthenelset condional_a;
+    condional_a.cond()=gen_clinit_eqexpr(
+        clinit_s_local_sym.symbol_expr(), clinit_statest::RETURN);
+    condional_a.then_case()=code_returnt();
+    function_body.add(condional_a);
+  }
+
+  // ATOMIC_BEGIN
+  {
+    function_body.add(sym_exec_lock);
+  }
+
+  // Assume: clinit_s_sym != IN_PROGRESS
+  {
+    exprt assumption=gen_clinit_eqexpr(clinit_s_sym.symbol_expr(),
+      clinit_statest::IN_PROGRESS);
+    assumption.negate();
+    code_assumet assume(assumption);
+    function_body.add(assume);
+    function_body.add(gen_clinit_assignexpr(
+      clinit_s_local_sym.symbol_expr(), clinit_statest::RETURN));
+  }
+
+  // If(C::__CPROVER_clinit_state==NOT_INIT) {
+  //   C::__CPROVER_clinit_state=IN_PROGRESS
+  //   was_ready=false;
+  //   }
+  // else If(C::__CPROVER_clinit_state==READY) {
+  //   was_ready=true
+  //   }
+  {
+    code_ifthenelset condional_a;
+    code_blockt condional_a_body;
+    condional_a.cond()=gen_clinit_eqexpr(
+      clinit_s_sym.symbol_expr(), clinit_statest::NOT_INIT);
+
+    condional_a_body.add(gen_clinit_assignexpr(
+      clinit_s_sym.symbol_expr(), clinit_statest::IN_PROGRESS));
+    condional_a_body.add(code_assignt(bool_local.symbol_expr(), false_exprt()));
+    condional_a.then_case()=condional_a_body;
+
+    code_ifthenelset condional_b;
+    code_blockt condional_b_body;
+    condional_b.cond()=gen_clinit_eqexpr(
+      clinit_s_sym.symbol_expr(), clinit_statest::RETURN);
+    condional_b_body.add(code_assignt(bool_local.symbol_expr(), true_exprt()));
+    condional_b.then_case()=condional_b_body;
+
+    condional_a.else_case()=condional_b;
+    function_body.add(condional_a);
+  }
+
+  // ATOMIC_END
+  // if(was_ready) return;
+  {
+    function_body.add(sym_exec_lock_end);
+    code_ifthenelset condional_a;
+    condional_a.cond()=equal_exprt(bool_local.symbol_expr(), true_exprt());
+    condional_a.then_case()=code_returnt();
+    function_body.add(condional_a);
+  }
+
+  // Initialize the syper-class C' and
+  // the implemented interfaces l_1 ... l_n.
+  // see JVMS p.359 step 7, for the exact defination of
+  // the sequence l_1 to l_n.
+  // This is achieved  by iterating through the base types and
+  // adding recursive calls to the clinit_wrapper()
+  {
+    const symbolt &class_symbol=*symbol_table.lookup(classname);
+    for(const auto &base : to_class_type(class_symbol.type).bases())
+    {
+      const auto base_name=to_symbol_type(base.type()).get_identifier();
+      const exprt& base_init_routine=get_or_create_clinit_wrapper(base_name);
+      if(base_init_routine.is_nil())
+        continue;
+      code_function_callt call_base;
+      call_base.function()=base_init_routine;
+      function_body.move_to_operands(call_base);
+    }
   }
 
   // call java::C::<clinit>(), if the class has one static initializer
@@ -1063,9 +1160,23 @@ exprt java_bytecode_convert_methodt::get_or_create_clinit_wrapper(
     call_real_init.function()=find_sym_it->second.symbol_expr();
     init_body.move_to_operands(call_real_init);
   }
-  wrapper_body.then_case()=init_body;
 
-  // insert symbol in the symbol table
+  // ATOMIC_START
+  // C::__CPROVER_clinit_state=RETURN;
+  // ATOMIC_END
+  // C::__CPROVER_clinit_local_state=RETURN;
+  // return;
+  {
+    // synchronization prologue
+    function_body.add(sym_exec_lock);
+    function_body.add(gen_clinit_assignexpr(
+       clinit_s_sym.symbol_expr(), clinit_statest::RETURN));
+    function_body.add(sym_exec_lock_end);
+    function_body.add(gen_clinit_assignexpr(
+      clinit_s_local_sym.symbol_expr(), clinit_statest::RETURN));
+    function_body.add(code_returnt());
+  }
+
   symbolt wrapper_method_symbol;
   code_typet wrapper_method_type;
   wrapper_method_type.return_type()=void_typet();
@@ -1073,7 +1184,7 @@ exprt java_bytecode_convert_methodt::get_or_create_clinit_wrapper(
   wrapper_method_symbol.pretty_name=clinit_wrapper_name;
   wrapper_method_symbol.base_name="clinit_wrapper";
   wrapper_method_symbol.type=wrapper_method_type;
-  wrapper_method_symbol.value=wrapper_body;
+  wrapper_method_symbol.value=function_body;
   wrapper_method_symbol.mode=ID_java;
   symbol_table.add(wrapper_method_symbol);
   return wrapper_method_symbol.symbol_expr();
@@ -3127,3 +3238,53 @@ void java_bytecode_convert_methodt::create_stack_tmp_var(
   block.copy_to_operands(code_assignt(tmp_var, stack_entry));
   stack_entry=tmp_var;
 }
+
+/// Utility method
+/// Adds a new symbol to the symbol table.
+/// Assumes that a symbol with this name does not exist.
+symbolt java_bytecode_convert_methodt::add_new_symbol(
+  symbol_table_baset& symbol_table,
+  const irep_idt& name,
+  const irep_idt& base_name,
+  const typet& type,
+  const exprt& value,
+  const bool is_thread_local,
+  const bool is_static_lifetime)
+{
+  symbolt new_symbol;
+  new_symbol.name=name;
+  new_symbol.pretty_name=name;
+  new_symbol.base_name=base_name;
+  new_symbol.type=type;
+  new_symbol.value=value;
+  new_symbol.is_lvalue=true;
+  new_symbol.is_state_var=true;
+  new_symbol.is_static_lifetime=is_static_lifetime;
+  new_symbol.is_thread_local=is_thread_local;
+  new_symbol.mode=ID_java;
+  symbol_table.add(new_symbol);
+  return new_symbol;
+}
+
+/// Utility method
+/// Used to generate a code_assignt for clinit_statest
+code_assignt java_bytecode_convert_methodt::gen_clinit_assignexpr(
+  const exprt& symbol_expr,
+  const clinit_statest state)
+{
+  mp_integer initv(static_cast<int>(state));
+  constant_exprt init_s=from_integer(initv, java_int_type());
+  return code_assignt(symbol_expr, init_s);
+}
+
+/// Utility method
+/// Used to generate a equal_exprt for clinit_statest
+equal_exprt java_bytecode_convert_methodt::gen_clinit_eqexpr(
+  const exprt& symbol_expr,
+  const clinit_statest state)
+{
+  mp_integer initv(static_cast<int>(state));
+  constant_exprt init_s=from_integer(initv, java_int_type());
+  return equal_exprt(symbol_expr, init_s);
+}
+

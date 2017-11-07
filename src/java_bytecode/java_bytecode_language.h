@@ -108,6 +108,8 @@ public:
     const std::string &module) override;
 
   virtual bool final(symbol_table_baset &context) override;
+  void replace_thread_blocks(symbol_tablet &context);
+  void convert_threadblock(codet& code, symbol_tablet &symbol_table);
 
   void show_parse(std::ostream &out) override;
 
