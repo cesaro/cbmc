@@ -16,6 +16,7 @@ Author: Daniel Kroening, kroening@kroening.com
 #include <util/cmdline.h>
 #include <util/string2int.h>
 #include <util/invariant.h>
+#include <util/std_types.h>
 #include <json/json_parser.h>
 
 #include <goto-programs/class_hierarchy.h>
@@ -413,14 +414,104 @@ void java_bytecode_languaget::replace_string_methods(
   }
 }
 
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-variable"
+
+bool java_bytecode_languaget::convert(codet& code, const namespacet& ns)
+{
+  const irep_idt &b_statement=code.get_statement();
+  if(b_statement==ID_function_call)
+  {
+    // get function name and see if it matches org.cprover.start() or org.cprover.end()
+    std::string fname = "";
+    code_function_callt &f_code=to_code_function_call(code);
+    exprt& function = f_code.function();
+    from_expr(function, fname, ns);
+    if(fname == "org.cprover.CProver.startThread:(I)V")
+    {
+      exprt& expr=f_code.arguments()[0];
+      std::string v_str=expr.op0().get_string(ID_value);
+      mp_integer v=binary2integer(v_str, false);
+      const std::string &lbl1 = "TS_1_" +integer2string(v);
+      const std::string &lbl2 = "TS_2_" +integer2string(v);
+
+      codet tmp_a(ID_start_thread);
+      tmp_a.set(ID_destination, lbl1);
+
+      code_gotot tmp_b(lbl2);
+
+      code_labelt tmp_c(lbl1);
+      tmp_c.op0() = codet(ID_skip);
+
+      code_blockt block;
+      block.add(tmp_a);
+      block.add(tmp_b);
+      block.add(tmp_c);
+      block.add_source_location()=code.source_location();
+      code = block;
+    }
+    else if(fname == "org.cprover.CProver.endThread:(I)V")
+    {
+      exprt& expr=f_code.arguments()[0];
+      std::string v_str=expr.op0().get_string(ID_value);
+      mp_integer v=binary2integer(v_str, false);
+      const std::string &lbl1 = "TS_1_" +integer2string(v);
+      const std::string &lbl2 = "TS_2_" +integer2string(v);
+
+      codet tmp_e(ID_end_thread);
+      code_labelt tmp_z(lbl2);
+      tmp_z.op0() = codet(ID_skip);
+
+      code_blockt block;
+      block.add(tmp_e);
+      block.add(tmp_z);
+      block.add_source_location()=code.source_location();
+      code = block;
+    }
+  }
+  else if(b_statement==ID_block)
+  {
+    // now convert block
+    code_blockt& block_code = to_code_block(code);
+    for(exprt& op : block_code.operands())
+      convert(to_code(op), ns);
+  }
+  else if(b_statement==ID_label)
+  {
+    convert(to_code(code.op0()), ns);
+  }
+
+  return true;
+}
+
 bool java_bytecode_languaget::final(symbol_tablet &symbol_table)
 {
   PRECONDITION(language_options_initialized);
 
+  // Symbols that have code type are potentialy to be replaced
   // replace code of String methods calls by code we generate
   replace_string_methods(symbol_table);
 
+  // Deal with org.cprover.CProver.startThread()/endThread()
+  std::list<symbolt> code_symbols;
+  forall_symbols(symbol, symbol_table.symbols)
+  {
+    if(symbol->second.type.id()==ID_code)
+      code_symbols.push_back(symbol->second);
+  }
+
+  namespacet ns(symbol_table);
+  for(const auto &symbol : code_symbols)
+  {
+    if(strcmp(symbol.base_name.c_str(), "start") == 0)
+    {
+      symbolt &w_symbol=*symbol_table.get_writeable(symbol.name);
+      convert(to_code(w_symbol.value), ns);
+    }
+  }
   return false;
+  #pragma GCC diagnostic pop
 }
 
 void java_bytecode_languaget::show_parse(std::ostream &out)

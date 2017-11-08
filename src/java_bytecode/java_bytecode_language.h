@@ -107,6 +107,7 @@ public:
 
   void replace_string_methods(symbol_tablet &context);
 
+  bool convert(codet& code, const namespacet &ns);
   virtual bool final(
     symbol_tablet &context) override;
 

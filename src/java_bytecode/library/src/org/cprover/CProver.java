@@ -4,7 +4,7 @@ public final class CProver
 {
   public static boolean enableAssume=true;
   public static boolean enableNondet=true;
-  public static boolean enableAtomic=true;
+  public static boolean enableConcurrency=true;
 
   public static boolean nondetBoolean()
   {
@@ -116,6 +116,25 @@ public final class CProver
     return null;
   }
 
+
+  public static void startThread(int id)
+  {
+    if(enableConcurrency)
+    {
+      throw new RuntimeException(
+          "Cannot execute program with CProver.startThread()");
+    }
+  }
+
+  public static void endThread(int id)
+  {
+    if(enableConcurrency)
+    {
+      throw new RuntimeException(
+          "Cannot execute program with CProver.endThread()");
+    }
+  }
+
   public static void assume(boolean condition)
   {
     if(enableAssume && !condition)
@@ -124,33 +143,33 @@ public final class CProver
     }
   }
 
-  public static void atomic_begin()
+  public static void atomicBegin()
   {
-    if(enableAtomic)
+    if(enableConcurrency)
     {
       throw new RuntimeException(
-          "Cannot execute program with CProver.atomic_begin()");
+          "Cannot execute program with CProver.atomicBegin()");
     }
   }
 
-  public static void atomic_end()
+  public static void atomicEnd()
   {
-    if(enableAtomic)
+    if(enableConcurrency)
     {
       throw new RuntimeException(
-          "Cannot execute program with CProver.atomic_end()");
+          "Cannot execute program with CProver.atomicEnd()");
     }
   }
 
   public static void monitorenter(Object object)
   {
-    atomic_begin();
-    atomic_end();
+    atomicBegin();
+    atomicEnd();
   }
 
   public static void monitorexit(Object object)
   {
-    atomic_begin();
-    atomic_end();
+    atomicBegin();
+    atomicEnd();
   }
 }

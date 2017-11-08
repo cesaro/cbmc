@@ -2830,8 +2830,10 @@ void java_bytecode_convert_method(
     "nondetWithNull",
     "nondetWithoutNull",
     "notModelled",
-    "atomic_begin",
-    "atomic_end"
+    "atomicBegin",
+    "atomicEnd"
+    "startThread",
+    "endThread"
   };
 
   if(std::regex_match(
