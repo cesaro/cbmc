@@ -833,6 +833,14 @@ void java_object_factoryt::gen_nondet_struct_init(
       code.add_source_location()=loc;
       assignments.copy_to_operands(code);
     }
+    else if((struct_tag=="java.lang.Object") && (name=="lock"))
+    {
+      if(update_in_place==update_in_placet::MUST_UPDATE_IN_PLACE)
+        continue;
+      code_assignt code(me, from_integer(0, me.type()));
+      code.add_source_location()=loc;
+      assignments.copy_to_operands(code);
+    }
     else
     {
       INVARIANT(!name.empty(), "Each component of a struct must have a name");

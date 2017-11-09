@@ -36,6 +36,10 @@ public class Object {
     // Not present in the original Object class
     public int lock;
     
+    public Object() {
+      lock = 0;
+    }
+    
     public final Class<?> getClass() {
       /*
        * MODELS LIBRARY {
