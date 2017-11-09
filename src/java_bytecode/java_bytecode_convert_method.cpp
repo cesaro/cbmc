@@ -1204,6 +1204,8 @@ codet java_bytecode_convert_methodt::convert_instructions(
     }
 
     if(i_it->statement=="athrow" ||
+       i_it->statement=="monitorenter" ||
+       i_it->statement=="monitorexit" ||
        i_it->statement=="putfield" ||
        i_it->statement=="getfield" ||
        i_it->statement=="checkcast" ||
