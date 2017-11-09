@@ -1,4 +1,4 @@
-all: org.cprover.jar
+all: core-models.jar
 
 SOURCE_DIR := src
 BINARY_DIR := classes
@@ -22,5 +22,5 @@ compile: $(BINARY_DIR)
 JAR := jar
 JARFLAGS := -cf
 
-org.cprover.jar: compile
-	$(JAR) $(JARFLAGS) $@ -C $(BINARY_DIR) org
+core-models.jar: compile
+	$(JAR) $(JARFLAGS) $@ -C $(BINARY_DIR) .
