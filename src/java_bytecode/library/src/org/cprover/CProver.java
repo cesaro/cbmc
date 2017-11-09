@@ -160,20 +160,5 @@ public final class CProver
           "Cannot execute program with CProver.atomicEnd()");
     }
   }
-    atomicBegin();
-    atomicEnd();
-    atomicBegin();
-    atomicEnd();
 
-  public static void monitorenter(Object object)
-  {
-    atomicBegin();
-    atomicEnd();
-  }
-
-  public static void monitorexit(Object object)
-  {
-    atomicBegin();
-    atomicEnd();
-  }
 }
