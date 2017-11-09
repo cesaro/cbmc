@@ -122,4 +122,18 @@ public final class CProver
       throw new RuntimeException("CProver.assume() predicate is false");
     }
   }
+
+  /**
+   * If this method is found in the test-gen trace for a particular trace,
+   * that test will be discarded with a message explaining that the test
+   * calls a non-modelled method.
+   * This allows us to copy full classes from the JDK, and insert this function
+   * call into non-modelled methods. We can then model a handful of the
+   * methods on the class, ensuring that tests will only be generated for
+   * 'known-good' models.
+   */
+  public static void notModelled()
+  {
+    assume(false);
+  }
 }
