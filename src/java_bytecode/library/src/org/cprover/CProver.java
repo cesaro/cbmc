@@ -1,4 +1,5 @@
 package org.cprover;
+import java.lang.Object;
 
 public final class CProver
 {
@@ -173,5 +174,10 @@ public final class CProver
   public static void notModelled()
   {
     assume(false);
+  }
+  
+  int getMonitorCount(Object object)
+  {
+    return object.monitorCount;
   }
 }

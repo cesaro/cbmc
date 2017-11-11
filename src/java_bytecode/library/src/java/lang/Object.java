@@ -34,10 +34,10 @@ public class Object {
     // lock needed for synchronization in cbmc
     // used by monitorenter, monitorexit, wait, and notify
     // Not present in the original Object class
-    public int lock;
+    public int monitorCount;
     
     public Object() {
-      lock = 0;
+      monitorCount = 0;
     }
     
     public final Class<?> getClass() {
@@ -72,49 +72,49 @@ public class Object {
     public final void notify()
     {
 /*        // The thread must own the lock when it calls notify
-        if(lock == 0)
+        if(monitorCount == 0)
         {
             throw new IllegalMonitorStateException();
         }
         // We release all locks temporarilly to allow waiting threads to
         // reacquire it.
-        int templock = lock;
-        lock=0;
+        int tempMonitorCount = monitorCount;
+        monitorCount=0;
 
         // FIXME: notify should only wake up one thread
 
         // We reacquire all locks and continue
-        lock=templock;*/
+        monitorCount=tempMonitorCount;*/
     }
 
     // See implementation of notify
     public final void notifyAll()
     {
-/*        if (lock == 0)
+/*        if (monitorCount == 0)
         {
             throw new IllegalMonitorStateException();
         }
-        int templock = lock;
-        lock=0;
+        int tempMonitorCount = monitorCount;
+        monitorCount=0;
 
         // FIXME: notify should only wake up all threads
         
-        lock=templock;*/
+        monitorCount=tempMonitorCount;*/
     }
 
     public final void wait(long timeout) throws InterruptedException {
       // The thread must own the lock when it calls wait
-      /*if (lock == 0)
+      /*if (monitorCount == 0)
       {
           throw new IllegalMonitorStateException();
       }
       
-      int templock = lock;
-      lock=0;
+      int tempMonitorCount = monitorCount;
+      monitorCount=0;
 
       // FIXME: we require notifies to be able to interpose here
         
-      lock=templock;*/
+      monitorCount=tempMonitorCount;*/
       
       // FIXME: should only throw if the interrupted flag in Thread is enabled
       throw new InterruptedException();
@@ -152,8 +152,8 @@ public class Object {
         throw new NullPointerException();
       }
       CProver.atomicBegin();
-      CProver.assume(object.lock == 0);
-      object.lock++;
+      CProver.assume(object.monitorCount == 0);
+      object.monitorCount++;
       CProver.atomicEnd();
     }
 
@@ -163,12 +163,12 @@ public class Object {
       {
         throw new NullPointerException();
       }
-      if (object.lock == 0)
+      if (object.monitorCount == 0)
       {
         throw new IllegalMonitorStateException();
       }
       CProver.atomicBegin();
-      object.lock--;
+      object.monitorCount--;
       CProver.atomicEnd();
     }
 
