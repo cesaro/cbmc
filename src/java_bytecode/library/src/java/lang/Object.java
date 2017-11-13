@@ -28,6 +28,7 @@ package java.lang;
 import org.cprover.CProver;
 import java.lang.NullPointerException;
 import java.lang.IllegalMonitorStateException;
+import java.lang.Thread;
 
 public class Object {
 
@@ -35,6 +36,7 @@ public class Object {
     // used by monitorenter, monitorexit, wait, and notify
     // Not present in the original Object class
     public int monitorCount;
+    public int holdingThreadId;
     
     public Object() {
       monitorCount = 0;
@@ -145,19 +147,22 @@ public class Object {
 
     protected void finalize() throws Throwable { }
     
-    public static void monitorenter(Object object)
+    public void monitorenter(Object object)
     {
       if (object == null)
       {
         throw new NullPointerException();
       }
+      int id=0;// Thread.currentThread.getId();
       CProver.atomicBegin();
-      CProver.assume(object.monitorCount == 0);
+      CProver.assume((object.monitorCount == 0)
+        || (object.holdingThreadId==id));
       object.monitorCount++;
+      object.holdingThreadId=id;
       CProver.atomicEnd();
     }
 
-    public static void monitorexit(Object object)
+    public void monitorexit(Object object)
     {
       if (object == null)
       {

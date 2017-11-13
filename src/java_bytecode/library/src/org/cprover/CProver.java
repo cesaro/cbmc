@@ -176,6 +176,9 @@ public final class CProver
     assume(false);
   }
   
+  /**
+   * retrieves the current locking depth of the object
+   */
   int getMonitorCount(Object object)
   {
     return object.monitorCount;
