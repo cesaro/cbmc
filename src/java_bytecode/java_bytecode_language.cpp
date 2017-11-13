@@ -7,6 +7,7 @@ Author: Daniel Kroening, kroening@kroening.com
 \*******************************************************************/
 
 #include "java_bytecode_language.h"
+#include "java_bytecode_synchronize.h"
 
 #include <string>
 
@@ -591,6 +592,8 @@ bool java_bytecode_languaget::final(symbol_tablet &symbol_table)
 
   // Deal with org.cprover.CProver.startThread() and endThread()
   replace_thread_blocks(symbol_table);
+
+  java_bytecode_synchronizet synchronizer(symbol_table);
 
   return false;
 }
