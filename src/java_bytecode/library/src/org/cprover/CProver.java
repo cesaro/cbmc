@@ -1,4 +1,5 @@
 package org.cprover;
+import java.lang.Object;
 
 public final class CProver
 {
@@ -183,5 +184,13 @@ public final class CProver
   public static void notModelled()
   {
     assume(false);
+  }
+  
+  /**
+   * retrieves the current locking depth of the object
+   */
+  int getMonitorCount(Object object)
+  {
+    return object.monitorCount;
   }
 }

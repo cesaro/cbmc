@@ -278,7 +278,10 @@ void java_bytecode_convert_method_lazy(
     member_type.set(ID_access, ID_private);
   else
     member_type.set(ID_access, ID_default);
-
+  if (m.is_synchronized)
+    member_type.set(ID_is_synchronized, true);
+  if (m.is_static)
+    member_type.set(ID_is_static, true);
   if(method_symbol.base_name=="<init>")
   {
     method_symbol.pretty_name=
@@ -1642,7 +1645,8 @@ codet java_bytecode_convert_methodt::convert_instructions(
       // returning the same call otherwise
       c=string_preprocess.replace_character_call(call);
 
-      if(!use_this)
+      if(!use_this && id2string(arg0.get(ID_identifier))!=
+        "java::org.cprover.CProver.atomicEnd:()V")
       {
         codet clinit_call=get_clinit_call(arg0.get(ID_C_class));
         if(clinit_call.get_statement()!=ID_skip)
@@ -2555,11 +2559,15 @@ codet java_bytecode_convert_methodt::convert_instructions(
       type.parameters().resize(1);
       type.parameters()[0].type()=java_reference_type(void_typet());
       code_function_callt call;
-      call.function()=symbol_exprt("java::java.lang.Object.monitorenter:(Ljava/lang/Object;)V", type);
+      call.function()=symbol_exprt("java::java.lang.Object.monitorenter:()V", type);
       call.lhs().make_nil();
       call.arguments().push_back(op[0]);
       call.add_source_location()=i_it->source_location;
       c=call;
+      if(lazy_methods)
+      {
+        lazy_methods->add_needed_method("java::java.lang.Object.monitorenter:()V");
+      }
     }
     else if(statement=="monitorexit")
     {
@@ -2569,11 +2577,15 @@ codet java_bytecode_convert_methodt::convert_instructions(
       type.parameters().resize(1);
       type.parameters()[0].type()=java_reference_type(void_typet());
       code_function_callt call;
-      call.function()=symbol_exprt("java::java.lang.Object.monitorexit:(Ljava/lang/Object;)V", type);
+      call.function()=symbol_exprt("java::java.lang.Object.monitorexit:()V", type);
       call.lhs().make_nil();
       call.arguments().push_back(op[0]);
       call.add_source_location()=i_it->source_location;
       c=call;
+      if(lazy_methods)
+      {
+        lazy_methods->add_needed_method("java::java.lang.Object.monitorexit:()V");
+      }
     }
     else if(statement=="swap")
     {
