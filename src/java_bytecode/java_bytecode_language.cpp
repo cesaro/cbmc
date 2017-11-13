@@ -7,6 +7,7 @@ Author: Daniel Kroening, kroening@kroening.com
 \*******************************************************************/
 
 #include "java_bytecode_language.h"
+#include "java_bytecode_synchronize.h"
 
 #include <string>
 
@@ -642,6 +643,8 @@ void java_bytecode_languaget::convert_threadblock(codet &code,
 bool java_bytecode_languaget::final(symbol_table_baset &symbol_table)
 {
   PRECONDITION(language_options_initialized);
+
+  java_bytecode_synchronizet synchronizer(symbol_table);
 
   return recreate_initialize(
     symbol_table,
