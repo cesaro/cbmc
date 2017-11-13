@@ -161,6 +161,16 @@ public final class CProver
     }
   }
 
+  public static int getCurrentThreadID()
+  {
+    if(enableConcurrency)
+    {
+      throw new RuntimeException(
+          "Cannot execute program with CProver.getCurrentThreadID()");
+    }
+    return 0;
+  }
+
   /**
    * If this method is found in the test-gen trace for a particular trace,
    * that test will be discarded with a message explaining that the test

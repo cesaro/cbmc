@@ -486,8 +486,10 @@ void java_bytecode_languaget::convert_threadblock(codet& code, symbol_tablet& sy
       // A: START_THREAD : TS_1_<ID>
       // B: goto : TS_2_<ID>
       // C: label (TS_1_<ID>)
-      // D: __CPROVER_thread_id=__CPROVER_next_thread_id+
+      // C.1 codet(ID_atomic_begin)
+      // D: __CPROVER_thread_id=__CPROVER_next_thread_id
       // E: __CPROVER_next_thread_id+=1;
+      // E.1 codet(ID_atomic_end)
 
       const symbolt& next_symbol=
         add_or_get_symbol(symbol_table, next_thread_id, true, false);
@@ -510,8 +512,10 @@ void java_bytecode_languaget::convert_threadblock(codet& code, symbol_tablet& sy
       block.add(tmp_a);
       block.add(tmp_b);
       block.add(tmp_c);
+      block.add(codet(ID_atomic_begin));
       block.add(tmp_d);
       block.add(tmp_e);
+      block.add(codet(ID_atomic_end));
 
       block.add_source_location()=code.source_location();
       code=block;
@@ -539,7 +543,17 @@ void java_bytecode_languaget::convert_threadblock(codet& code, symbol_tablet& sy
       block.add(tmp_g);
 
       block.add_source_location()=code.source_location();
-      code = block;
+      code=block;
+    }
+    else if(fname == "org.cprover.CProver.getCurrentThreadID:()I")
+    {
+      INVARIANT(f_code.arguments().size()==0,
+          "ERROR: CProver.getCurrentThreadID invalid number of arguments");
+      const symbolt& current_symbol=
+        add_or_get_symbol(symbol_table, thread_id, false, true);
+      code_assignt code_assign(f_code.lhs(), current_symbol.symbol_expr());
+      code_assign.add_source_location()=code.source_location();
+      code=code_assign;
     }
   }
   else if(statement==ID_block)
