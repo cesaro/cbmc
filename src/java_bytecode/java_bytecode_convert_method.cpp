@@ -1599,6 +1599,20 @@ codet java_bytecode_convert_methodt::convert_instructions(
       loc.set_function(method_id);
       c.add_source_location()=loc;
     }
+    // replace calls to CProver.atomicBegin
+    else if(statement=="invokestatic" &&
+            id2string(arg0.get(ID_identifier))==
+            "java::org.cprover.CProver.atomicBegin:()V")
+    {
+      c=codet (ID_atomic_begin);
+    }
+    // replace calls to CProver.atomicEnd
+    else if(statement=="invokestatic" &&
+            id2string(arg0.get(ID_identifier))==
+            "java::org.cprover.CProver.atomicEnd:()V")
+    {
+      c=codet (ID_atomic_end);
+    }
     else if(statement=="invokeinterface" ||
             statement=="invokespecial" ||
             statement=="invokevirtual" ||
@@ -1757,8 +1771,7 @@ codet java_bytecode_convert_methodt::convert_instructions(
       // returning the same call otherwise
       c=string_preprocess.replace_character_call(call);
 
-      if(!use_this && id2string(arg0.get(ID_identifier))!=
-        "java::org.cprover.CProver.atomicEnd:()V")
+      if(!use_this)
       {
         codet clinit_call=get_clinit_call(arg0.get(ID_C_class), method_name);
         if(clinit_call.get_statement()!=ID_skip)
