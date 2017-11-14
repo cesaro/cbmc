@@ -2625,9 +2625,7 @@ codet java_bytecode_convert_methodt::convert_instructions(
     for(const auto &exception_row : method.exception_table)
     {
       // add the CATCH-POP before the end of the try block
-      if(cur_pc<exception_row.end_pc &&
-         !working_set.empty() &&
-         *working_set.begin()==exception_row.end_pc)
+      if(cur_pc==exception_row.end_pc)
       {
         // have we already added a CATCH-POP for the current try-catch?
         // (each row corresponds to a handler)
@@ -2641,8 +2639,8 @@ codet java_bytecode_convert_methodt::convert_instructions(
           // add CATCH_POP instruction
           code_pop_catcht catch_pop;
           code_blockt end_try_block;
-          end_try_block.move_to_operands(c);
           end_try_block.move_to_operands(catch_pop);
+          end_try_block.move_to_operands(c);
           c=end_try_block;
         }
       }
