@@ -4,5 +4,5 @@ generics.class
 ^EXIT=0$
 ^SIGNAL=0$
 ^Type........: struct generics\$bound_element\<java::java.lang.Integer\> \{
-__CPROVER_string \@class_identifier; boolean \@lock; struct java.lang.Object \@java.lang.Object; struct java.lang.Integer \*elem; struct generics \*this\$0; \}$
+__CPROVER_string \@class_identifier; struct java.lang.Object \@java.lang.Object; struct java.lang.Integer \*elem; struct generics \*this\$0; \}$
 --
