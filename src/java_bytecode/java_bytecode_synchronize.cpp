@@ -135,10 +135,10 @@ Author: Dario Cattaruzza
     code_function_callt call;
     if (is_enter)
       call.function()=
-        symbol_exprt("java::java.lang.Object.monitorenter:()V", type);
+        symbol_exprt("java::java.lang.Object.monitorenter:(Ljava/lang/Object;)V", type);
     else
       call.function()=
-        symbol_exprt("java::java.lang.Object.monitorexit:()V", type);
+        symbol_exprt("java::java.lang.Object.monitorexit:(Ljava/lang/Object;)V", type);
     call.lhs().make_nil();
     call.arguments().push_back(object);
     return call;
