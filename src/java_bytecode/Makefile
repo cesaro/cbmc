@@ -36,10 +36,51 @@ INCLUDES= -I ..
 include ../config.inc
 include ../common
 
-CLEANFILES = java_bytecode$(LIBEXT)
+
+SOURCE_DIR := library/src
+BINARY_DIR := library/classes
+
+FIND := find
+
+JAVAC := javac
+JFLAGS := -sourcepath $(SOURCE_DIR) -d $(BINARY_DIR) -XDignore.symbol.file
+
+CLASSPATH := SOURCE_DIR
+
+all_javas := $(shell $(FIND) $(SOURCE_DIR) -name '*.java')
+all_classes := $(patsubst $(SOURCE_DIR)/%.java,$(BINARY_DIR)/%.class,$(all_javas))
+
+$(BINARY_DIR):
+	mkdir -p $(BINARY_DIR)
+
+.SUFFIXES: .java .class
+
+$(BINARY_DIR)/%.class : $(SOURCE_DIR)/%.java $(BINARY_DIR)
+	$(JAVAC) $(JFLAGS) $(patsubst $(BINARY_DIR)/%.class,$(SOURCE_DIR)/%.java,$@)
+
+JAR := jar
+JARFLAGS := -cf
+
+core-models.jar: $(all_classes)
+	$(JAR) $(JARFLAGS) $@ -C $(BINARY_DIR) .
+
+CLEANFILES = java_bytecode$(LIBEXT) core-models.jar converter
+
+clean : clean_
+
+clean_ :
+	$(RM) -Rf $(BINARY_DIR)
 
 all: java_bytecode$(LIBEXT)
 
+converter: library/converter.cpp
+	$(CXX) $(CP_CXXFLAGS) -o $@ $<
+
+java_class_loader.o: java_core_models.inc java_class_loader.cpp
+	$(CXX) -c $(CP_CXXFLAGS) -o $@ java_class_loader.cpp
+
+java_core_models.inc: converter core-models.jar
+	./converter JAVA_CORE_MODELS < core-models.jar > $@
 ###############################################################################
 
 java_bytecode$(LIBEXT): $(OBJ)

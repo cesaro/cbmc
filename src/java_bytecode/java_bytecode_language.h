@@ -22,6 +22,8 @@ Author: Daniel Kroening, kroening@kroening.com
 #include <java_bytecode/select_pointer_type.h>
 
 #define JAVA_BYTECODE_LANGUAGE_OPTIONS /*NOLINT*/ \
+  "(prefer-core-models)"                          \
+  "(no-core-models)"                              \
   "(java-assume-inputs-non-null)"                 \
   "(java-throw-runtime-exceptions)"               \
   "(java-max-input-array-length):"                \
@@ -32,6 +34,9 @@ Author: Daniel Kroening, kroening@kroening.com
   "(lazy-methods-extra-entry-point):"
 
 #define JAVA_BYTECODE_LANGUAGE_OPTIONS_HELP /*NOLINT*/                                          \
+  " --prefer-core-models             load core models first, overriding any external\n"         \
+  "                                  java.lang.* classes also contained in the core models\n"   \
+  " --no-core-models                 don't load the internally provided core models\n"          \
   " --java-assume-inputs-non-null    never initialize reference-typed parameter to the\n"       \
   "                                  entry point with null\n"                                   \
   " --java-throw-runtime-exceptions  make implicit runtime exceptions explicit\n"               \
