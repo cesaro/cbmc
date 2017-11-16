@@ -26,11 +26,23 @@ public:
   /// \param filename Name of the file
   /// \throw Throws std::runtime_error if file cannot be opened
   jar_filet(java_class_loader_limitt &limit, const std::string &filename);
+
+  /// Open a JAR file of size \p size loaded in memory at address \p pMem
+  /// \param limit Object limiting number of loaded .class files
+  /// \param pMem memory buffer with the contents of the jar file
+  /// \param size size  of the memory buffer
+  /// \throw Throws std::runtime_error if file cannot be opened
+  jar_filet(java_class_loader_limitt &limit, const void *pMem, size_t size);
+
   jar_filet(const jar_filet &)=delete;
   jar_filet &operator=(const jar_filet &)=delete;
   jar_filet(jar_filet &&);
   jar_filet &operator=(jar_filet &&);
   ~jar_filet()=default;
+  
+  /// Loads the fileindex (m_name_to_index) with a map of loaded files to indices
+  void initialize_file_index(java_class_loader_limitt &limit);
+
   /// Get contents of a file in the jar archive.
   /// Terminates the program if file doesn't exist
   /// \param filename Name of the file in the archive
