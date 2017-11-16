@@ -1,5 +1,4 @@
 CORE
- --classpath ../../../src/java_bytecode/library/core-models.jar:.
 test.class
 VERIFICATION SUCCESSFUL
 --
