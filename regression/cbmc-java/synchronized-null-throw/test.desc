@@ -1,0 +1,7 @@
+CORE
+Sync.class
+VERIFICATION SUCCESSFUL
+--
+^warning: ignoring
+--
+This checks that the synchronized keyword on a null object will always throw.

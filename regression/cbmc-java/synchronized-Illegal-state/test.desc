@@ -1,0 +1,7 @@
+CORE
+Sync.class
+VERIFICATION SUCCESSFUL
+--
+^warning: ignoring
+--
+This checks that an extra monitorexit will always trigger an IllegalMonitorException.
