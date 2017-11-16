@@ -1,0 +1,7 @@
+CORE
+Sync.class
+VERIFICATION SUCCESSFUL
+--
+^warning: ignoring
+--
+Checks all possible paths to ensure monitorexit is executed even after a trhow.

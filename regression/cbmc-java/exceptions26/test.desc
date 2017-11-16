@@ -1,9 +1,7 @@
 CORE
 test.class
-
-^EXIT=10$
-^SIGNAL=0$
-^.*assertion at file test.java line 18 function.*: FAILURE$
-^VERIFICATION FAILED$
+^VERIFICATION SUCCESSFUL$
 --
 ^warning: ignoring
+--
+This test verifies that catches are executed in the correct order
