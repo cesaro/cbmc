@@ -315,11 +315,16 @@ void remove_exceptionst::add_exception_dispatch_sequence(
     symbol_table.lookup_ref(id2string(function_id)+EXC_SUFFIX);
   symbol_exprt exc_thrown=exc_symbol.symbol_expr();
 
-  // add GOTOs implementing the dynamic dispatch of the
-  // exception handlers
+  std::size_t default_try=0;
+  std::size_t default_catch=(stack_catch.size()>0) ? stack_catch[0].size() : 0;
+
+  // Find the innermost universal exception handler
+  // (with exception type any). We record this one
+  // because no handler after it can possibly catch.
   for(std::size_t i=stack_catch.size(); i-->0;)
   {
-    for(std::size_t j=stack_catch[i].size(); j-->0;)
+    if(default_try!=0) break;
+    for(std::size_t j=0; j<stack_catch[i].size(); j++)
     {
       goto_programt::targett new_state_pc=
         stack_catch[i][j].second;
@@ -328,8 +333,30 @@ void remove_exceptionst::add_exception_dispatch_sequence(
         // Universal handler. Highest on the stack takes
         // precedence, so overwrite any we've already seen:
         default_target=new_state_pc;
+
+        // Record the position of the default behaviour as any further catches
+        // will not capture the throw
+        default_try=i;
+        default_catch=j;
+        break;
       }
-      else
+    }
+  }
+
+  // add GOTOs implementing the dynamic dispatch of the
+  // exception handlers.
+  // The first loop is in forward order because the insertion reverses the order
+  // we note  that try1{ try2 {} catch2c {} catch2d {}} catch1a() {} catch1b{}
+  // must catch in the following order: 2c 2d 1a 1b hence the numerical index
+  // is reversed whereas the letter ordering remains the same.
+  for(std::size_t i=default_try; i<stack_catch.size(); i++)
+  {
+    std::size_t j;
+    for(j=(i==default_try) ? default_catch : stack_catch[i].size(); j-->0;)
+    {
+      goto_programt::targett new_state_pc=
+        stack_catch[i][j].second;
+      if(!stack_catch[i][j].first.empty())
       {
         // Normal exception handler, make an instanceof check.
         goto_programt::targett t_exc=goto_program.insert_after(instr_it);

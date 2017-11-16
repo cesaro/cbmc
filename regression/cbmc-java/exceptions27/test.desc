@@ -1,0 +1,8 @@
+CORE
+ --classpath ../../../src/java_bytecode/library/core-models.jar:.
+test.class
+VERIFICATION SUCCESSFUL
+--
+^warning: ignoring
+--
+Tests embedded try-catch-finally to ensure the catching order is correct
