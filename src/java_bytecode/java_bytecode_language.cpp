@@ -43,6 +43,8 @@ Author: Daniel Kroening, kroening@kroening.com
 void java_bytecode_languaget::get_language_options(const cmdlinet &cmd)
 {
   assume_inputs_non_null=cmd.isset("java-assume-inputs-non-null");
+  java_class_loader.use_core_models=!cmd.isset("no-core-models");
+  java_class_loader.prefer_core_models=cmd.isset("prefer-core-models");
   string_refinement_enabled=cmd.isset("refine-strings");
   throw_runtime_exceptions=cmd.isset("java-throw-runtime-exceptions");
   if(cmd.isset("java-max-input-array-length"))
@@ -190,8 +192,11 @@ bool java_bytecode_languaget::typecheck(
   if(string_refinement_enabled)
     string_preprocess.initialize_conversion_table();
 
-  // Must load object first to avoid stubbing
-  java_class_loadert::class_mapt::const_iterator it=java_class_loader.class_map.find("java.lang.Object");
+  // Must load java.lang.Object first to avoid stubbing
+  // FIXME: its unclear if this ordering has to be done
+  // here or hard coded inside the classloader.
+  java_class_loadert::class_mapt::const_iterator it=
+    java_class_loader.class_map.find("java.lang.Object");
   if (it!=java_class_loader.class_map.end())
   {
     if(java_bytecode_convert_class(
