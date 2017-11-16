@@ -135,7 +135,8 @@ bool java_class_loadert::get_internal_class_file(
   // This does not read from the jar file but from the jar_filet object
   // as we've just created it
   read_jar_file(class_loader_limit, core_models);
-  return get_class_file(class_loader_limit, class_name, core_models, parse_tree);
+  return
+    get_class_file(class_loader_limit, class_name, core_models, parse_tree);
 }
 
 java_bytecode_parse_treet &java_class_loadert::get_parse_tree(

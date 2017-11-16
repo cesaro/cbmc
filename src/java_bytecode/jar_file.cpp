@@ -38,7 +38,7 @@ jar_filet::jar_filet(
   java_class_loader_limitt &limit,
   const void *pMem,
   size_t size):
-  m_zip_archive(pMem,size)
+  m_zip_archive(pMem, size)
 {
   initialize_file_index(limit);
 }

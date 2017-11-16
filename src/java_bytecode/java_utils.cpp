@@ -30,7 +30,6 @@ bool java_is_array_type(const typet &type)
 
 unsigned java_local_variable_slots(const typet &t)
 {
-
   // Even on a 64-bit platform, Java pointers occupy one slot:
   if(t.id()==ID_pointer)
     return 1;

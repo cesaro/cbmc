@@ -323,7 +323,8 @@ void remove_exceptionst::add_exception_dispatch_sequence(
   // because no handler after it can possibly catch.
   for(std::size_t i=stack_catch.size(); i-->0;)
   {
-    if(default_try!=0) break;
+    if(default_try!=0)
+      break;
     for(std::size_t j=0; j<stack_catch[i].size(); j++)
     {
       goto_programt::targett new_state_pc=
