@@ -31,14 +31,15 @@ Author: Dario Cattaruzza
    */
   void java_bytecode_synchronizet::visit_symbol(symbolt &symbol)
   {
-    if (symbol.type.get(ID_is_synchronized)!="1") return;
+    if(symbol.type.get(ID_is_synchronized)!="1")
+      return;
     bool is_static=(symbol.type.get(ID_is_static)=="1");
     codet &code=to_code(symbol.value);
 
     // Find object to lock/synchronize on
     irep_idt this_id(id2string(symbol.name)+"::this");
     exprt this_expr(this_id);
-    if (is_static)
+    if(is_static)
     {
       // FIXME: place code to get class here
     }
@@ -48,11 +49,11 @@ Author: Dario Cattaruzza
     {
       this_expr=it->second.symbol_expr();
     }
-    
+
     // get interposition code for the monitor lock/unlock
-    codet monitorenter=get_monitor_call(true,this_expr);
-    codet monitorexit=get_monitor_call(false,this_expr);
-    
+    codet monitorenter=get_monitor_call(true, this_expr);
+    codet monitorexit=get_monitor_call(false, this_expr);
+
     // Create a unique catch label and empty throw type (ie any)
     // and catch-push them at the beginning of the code (ie begin try).
     code_push_catcht catch_push;
@@ -61,7 +62,7 @@ Author: Dario Cattaruzza
     code_push_catcht::exception_listt &exception_list=
         catch_push.exception_list();
     exception_list.push_back(
-      code_push_catcht::exception_list_entryt(exception_id,handler));
+      code_push_catcht::exception_list_entryt(exception_id, handler));
 
     // Create a catch-pop to indicate the end of the try block
     code_pop_catcht catch_pop;
@@ -75,7 +76,7 @@ Author: Dario Cattaruzza
     code_landingpadt catch_statement(catch_var);
     codet catch_instruction=catch_statement;
     code_labelt catch_label(handler, code_blockt());
-    code_blockt& catch_block=to_code_block(catch_label.code());
+    code_blockt &catch_block=to_code_block(catch_label.code());
     catch_block.add(catch_instruction);
     catch_block.add(monitorexit);
 
@@ -85,7 +86,7 @@ Author: Dario Cattaruzza
     catch_block.add(code_expressiont(throw_expr));
 
     // Write a monitorexit before every return
-    monitor_exits(code,monitorexit);
+    monitor_exits(code, monitorexit);
 
     // Wrap the code into a try finally
     code_blockt try_block;
@@ -133,7 +134,7 @@ Author: Dario Cattaruzza
     type.parameters().resize(1);
     type.parameters()[0].type()=java_reference_type(void_typet());
     std::string symbol;
-    if (is_enter)
+    if(is_enter)
       symbol="java::java.lang.Object.monitorenter:(Ljava/lang/Object;)V";
     else
       symbol="java::java.lang.Object.monitorexit:(Ljava/lang/Object;)V";
@@ -141,13 +142,14 @@ Author: Dario Cattaruzza
       =symbol_table.symbols.find(symbol);
 
     // If the functions for monitorenter and monitorexit don't exist in the
-    // given jars, we implement them as skips because cbmc would fall over otherwise
-    // since it cannot find the function in the symbol table (function called but
-    // undefined symbol).
-    // FIXME: a better way to do this would be to have a final pass that checks every 
-    // function called in the codet and inserts missing symbols.
-    if (it==symbol_table.symbols.end()) return code_skipt();
-    
+    // otherwise given jars, we implement them as skips because cbmc would
+    // fall over since it cannot find the function in the symbol table
+    // (function called but undefined symbol).
+    // FIXME: a better way to do this would be to have a final pass that
+    // checks every function called in the codet and inserts missing symbols.
+    if(it==symbol_table.symbols.end())
+      return code_skipt();
+
     // Otherwise we create a function call
     code_function_callt call;
     call.function()=symbol_exprt(symbol, type);
@@ -172,14 +174,14 @@ Author: Dario Cattaruzza
       return_block.move_to_operands(code);
       code=return_block;
     }
-    else if((statement==ID_label) 
-      || (statement==ID_block) 
+    else if((statement==ID_label)
+      || (statement==ID_block)
       || (statement==ID_decl_block))
     {
       // If label or block found, explore the code inside the block
       Forall_operands(it, code)
       {
-        codet& sub_code=to_code(*it);
+        codet &sub_code=to_code(*it);
         monitor_exits(sub_code, monitorexit);
       }
     }

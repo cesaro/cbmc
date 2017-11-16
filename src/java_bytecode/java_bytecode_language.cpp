@@ -197,7 +197,7 @@ bool java_bytecode_languaget::typecheck(
   // here or hard coded inside the classloader.
   java_class_loadert::class_mapt::const_iterator it=
     java_class_loader.class_map.find("java.lang.Object");
-  if (it!=java_class_loader.class_map.end())
+  if(it!=java_class_loader.class_map.end())
   {
     if(java_bytecode_convert_class(
      it->second,
@@ -461,8 +461,9 @@ static const symbolt& add_or_get_symbol(symbol_tablet& symbol_table,
 ///
 /// \param code: codet, should be ID_function_call
 /// \param symbol_table: a symbol table
-void java_bytecode_languaget::convert_threadblock(codet &code,
-  symbol_tablet &symbol_table)
+void java_bytecode_languaget::convert_threadblock(
+  codet& code,
+  symbol_tablet& symbol_table)
 {
   PRECONDITION(code.get_statement()==ID_function_call);
   namespacet ns(symbol_table);
@@ -511,7 +512,8 @@ void java_bytecode_languaget::convert_threadblock(codet &code,
     exprt plus(ID_plus, java_int_type());
     plus.copy_to_operands(next_symbol.symbol_expr());
     plus.copy_to_operands(from_integer(1, java_int_type()));
-    code_assignt tmp_d(current_symbol.symbol_expr(), next_symbol.symbol_expr());
+    code_assignt tmp_d(current_symbol.symbol_expr(),
+      next_symbol.symbol_expr());
     code_assignt tmp_e(next_symbol.symbol_expr(), plus);
 
     code_blockt block;

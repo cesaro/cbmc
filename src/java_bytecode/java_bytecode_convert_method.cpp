@@ -278,9 +278,9 @@ void java_bytecode_convert_method_lazy(
     member_type.set(ID_access, ID_private);
   else
     member_type.set(ID_access, ID_default);
-  if (m.is_synchronized)
+  if(m.is_synchronized)
     member_type.set(ID_is_synchronized, true);
-  if (m.is_static)
+  if(m.is_static)
     member_type.set(ID_is_static, true);
   if(method_symbol.base_name=="<init>")
   {
@@ -1502,14 +1502,14 @@ codet java_bytecode_convert_methodt::convert_instructions(
             id2string(arg0.get(ID_identifier))==
             "java::org.cprover.CProver.atomicBegin:()V")
     {
-      c=codet (ID_atomic_begin);
+      c=codet(ID_atomic_begin);
     }
     // replace calls to CProver.atomicEnd
     else if(statement=="invokestatic" &&
             id2string(arg0.get(ID_identifier))==
             "java::org.cprover.CProver.atomicEnd:()V")
     {
-      c=codet (ID_atomic_end);
+      c=codet(ID_atomic_end);
     }
     else if(statement=="invokeinterface" ||
             statement=="invokespecial" ||
@@ -1619,7 +1619,9 @@ codet java_bytecode_convert_methodt::convert_instructions(
       //   accessible" than it actually is.
       irep_idt id=arg0.get(ID_identifier);
       if(symbol_table.symbols.find(id)==symbol_table.symbols.end() &&
-         !(is_virtual && is_method_inherited(arg0.get(ID_C_class), arg0.get(ID_component_name))))
+         !(is_virtual
+           && is_method_inherited(arg0.get(ID_C_class),
+                                  arg0.get(ID_component_name))))
       {
         symbolt symbol;
         symbol.name=id;
@@ -2583,7 +2585,9 @@ codet java_bytecode_convert_methodt::convert_instructions(
       type.parameters()[0].type()=java_reference_type(void_typet());
       code_function_callt call;
       call.function()=
-        symbol_exprt("java::java.lang.Object.monitorenter:(Ljava/lang/Object;)V", type);
+        symbol_exprt(
+          "java::java.lang.Object.monitorenter:(Ljava/lang/Object;)V",
+          type);
       call.lhs().make_nil();
       call.arguments().push_back(op[0]);
       call.add_source_location()=i_it->source_location;
@@ -2603,7 +2607,9 @@ codet java_bytecode_convert_methodt::convert_instructions(
       type.parameters()[0].type()=java_reference_type(void_typet());
       code_function_callt call;
       call.function()=
-        symbol_exprt("java::java.lang.Object.monitorexit:(Ljava/lang/Object;)V", type);
+        symbol_exprt(
+          "java::java.lang.Object.monitorexit:(Ljava/lang/Object;)V",
+          type);
       call.lhs().make_nil();
       call.arguments().push_back(op[0]);
       call.add_source_location()=i_it->source_location;

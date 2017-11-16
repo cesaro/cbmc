@@ -19,7 +19,7 @@ class java_bytecode_synchronizet
 private:
   symbol_tablet &symbol_table;
 public:
-  java_bytecode_synchronizet(symbol_tablet& _symbol_table);
+  explicit java_bytecode_synchronizet(symbol_tablet& _symbol_table);
 
   /**
    * This function will wrap the code inside a synchronized block
@@ -45,7 +45,7 @@ protected:
   /**
    * Introduces a monitorexit before every return
    */
-  void monitor_exits(codet &code,codet &monitorexit);
+  void monitor_exits(codet &code, codet &monitorexit);
 };
 
 #endif // CPROVER_JAVA_BYTECODE_JAVA_BYTECODE_SYNCHRONIZE_H

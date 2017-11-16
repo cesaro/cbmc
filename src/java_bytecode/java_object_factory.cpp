@@ -460,7 +460,8 @@ public:
   /// Initialize a recursion-set entry owner operating on a given set.
   /// Initially it does not own any set entry.
   /// \param _recursion_set: set to operate on.
-  recursion_set_entryt(std::unordered_set<irep_idt, irep_id_hash> &_recursion_set):
+  explicit recursion_set_entryt(
+      std::unordered_set<irep_idt, irep_id_hash> &_recursion_set):
     recursion_set(_recursion_set)
   { }
 
