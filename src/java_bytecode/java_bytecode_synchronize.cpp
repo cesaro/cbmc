@@ -132,13 +132,25 @@ Author: Dario Cattaruzza
     type.return_type()=void_typet();
     type.parameters().resize(1);
     type.parameters()[0].type()=java_reference_type(void_typet());
-    code_function_callt call;
+    std::string symbol;
     if (is_enter)
-      call.function()=
-        symbol_exprt("java::java.lang.Object.monitorenter:(Ljava/lang/Object;)V", type);
+      symbol="java::java.lang.Object.monitorenter:(Ljava/lang/Object;)V";
     else
-      call.function()=
-        symbol_exprt("java::java.lang.Object.monitorexit:(Ljava/lang/Object;)V", type);
+      symbol="java::java.lang.Object.monitorexit:(Ljava/lang/Object;)V";
+    symbol_tablet::symbolst::const_iterator it
+      =symbol_table.symbols.find(symbol);
+
+    // If the functions for monitorenter and monitorexit don't exist in the
+    // given jars, we implement them as skips because cbmc would fall over otherwise
+    // since it cannot find the function in the symbol table (function called but
+    // undefined symbol).
+    // FIXME: a better way to do this would be to have a final pass that checks every 
+    // function called in the codet and inserts missing symbols.
+    if (it==symbol_table.symbols.end()) return code_skipt();
+    
+    // Otherwise we create a function call
+    code_function_callt call;
+    call.function()=symbol_exprt(symbol, type);
     call.lhs().make_nil();
     call.arguments().push_back(object);
     return call;

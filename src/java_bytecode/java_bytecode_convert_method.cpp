@@ -2630,14 +2630,16 @@ codet java_bytecode_convert_methodt::convert_instructions(
       type.parameters().resize(1);
       type.parameters()[0].type()=java_reference_type(void_typet());
       code_function_callt call;
-      call.function()=symbol_exprt("java::java.lang.Object.monitorenter:(Ljava/lang/Object;)V", type);
+      call.function()=
+        symbol_exprt("java::java.lang.Object.monitorenter:(Ljava/lang/Object;)V", type);
       call.lhs().make_nil();
       call.arguments().push_back(op[0]);
       call.add_source_location()=i_it->source_location;
       c=call;
       if(lazy_methods)
       {
-        lazy_methods->add_needed_method("java::java.lang.Object.monitorenter:(Ljava/lang/Object;)V");
+        lazy_methods->add_needed_method(
+          "java::java.lang.Object.monitorenter:(Ljava/lang/Object;)V");
       }
     }
     else if(statement=="monitorexit")
@@ -2648,14 +2650,16 @@ codet java_bytecode_convert_methodt::convert_instructions(
       type.parameters().resize(1);
       type.parameters()[0].type()=java_reference_type(void_typet());
       code_function_callt call;
-      call.function()=symbol_exprt("java::java.lang.Object.monitorexit:(Ljava/lang/Object;)V", type);
+      call.function()=
+        symbol_exprt("java::java.lang.Object.monitorexit:(Ljava/lang/Object;)V", type);
       call.lhs().make_nil();
       call.arguments().push_back(op[0]);
       call.add_source_location()=i_it->source_location;
       c=call;
       if(lazy_methods)
       {
-        lazy_methods->add_needed_method("java::java.lang.Object.monitorexit:(Ljava/lang/Object;)V");
+        lazy_methods->add_needed_method(
+          "java::java.lang.Object.monitorexit:(Ljava/lang/Object;)V");
       }
     }
     else if(statement=="swap")
