@@ -8,6 +8,8 @@ Author: Dario Cattaruzza
 
 #include "java_bytecode_synchronize.h"
 
+  // Meant to be a visitor class. Currently the constructor
+  // performs the visits.
   java_bytecode_synchronizet::java_bytecode_synchronizet(
     symbol_tablet& _symbol_table) :
   symbol_table(_symbol_table)
@@ -23,12 +25,10 @@ Author: Dario Cattaruzza
     }
   }
 
-  /**
-   * This function will wrap the code inside a synchronized block.
-   * This is achieved by placing a monitorenter at the beginning and a
-   * monitorexit at every return. Additionally the whole block is wrapped in
-   * a try-finally in order to recover the monitorexit in case of exceptions
-   */
+  /// This function will wrap the code inside a synchronized block.
+  /// This is achieved by placing a monitorenter at the beginning and a
+  /// monitorexit at every return. Additionally the whole block is wrapped in
+  /// a try-finally in order to recover the monitorexit in case of exceptions
   void java_bytecode_synchronizet::visit_symbol(symbolt &symbol)
   {
     if(symbol.type.get(ID_is_synchronized)!="1")
@@ -42,6 +42,8 @@ Author: Dario Cattaruzza
     if(is_static)
     {
       // FIXME: place code to get class here
+      // getClass doesnot have a singleton at the moment
+      // to retrieve from the symbol table.
     }
     symbol_tablet::symbolst::const_iterator it
         =symbol_table.symbols.find(this_id);
@@ -98,9 +100,7 @@ Author: Dario Cattaruzza
     code=try_block;
   }
 
-  /**
-   * Creates a temporary variable (used to record the caught exception)
-   */
+  /// Creates a temporary variable (used to record the caught exception)
   symbol_exprt java_bytecode_synchronizet::tmp_variable(
     const std::string &prefix,
     const std::string &name,
@@ -122,9 +122,10 @@ Author: Dario Cattaruzza
     return result;
   }
 
-  /**
-   * Retrieves a monitorenter/monitorexit call expr for the given object
-   */
+  /// Retrieves a monitorenter/monitorexit call expr for the given object.
+  /// \param is_enter Indicates whether we are creating a monitorenter or exit.
+  /// \param object An expression givin the object in which we need to perform a
+  ///   monitorenter/exit operation.
   codet java_bytecode_synchronizet::get_monitor_call(
     bool is_enter,
     exprt &object)
@@ -143,8 +144,8 @@ Author: Dario Cattaruzza
 
     // If the functions for monitorenter and monitorexit don't exist in the
     // otherwise given jars, we implement them as skips because cbmc would
-    // fall over since it cannot find the function in the symbol table
-    // (function called but undefined symbol).
+    // crash, since it cannot find the function in the symbol table (function
+    // called but undefined symbol).
     // FIXME: a better way to do this would be to have a final pass that
     // checks every function called in the codet and inserts missing symbols.
     if(it==symbol_table.symbols.end())
@@ -158,9 +159,9 @@ Author: Dario Cattaruzza
     return call;
   }
 
-  /**
-   * Introduces a monitorexit before every return
-   */
+  /// Introduces a monitorexit before every return recursively
+  /// \param code current element to check
+  /// \param monitorexit codet to insert before the return.
   void java_bytecode_synchronizet::monitor_exits(
     codet &code,
     codet &monitorexit)
