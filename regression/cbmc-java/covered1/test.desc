@@ -1,6 +1,6 @@
 CORE
 covered1.class
---cover location --json-ui --show-properties
+--cover location --json-ui --show-properties --no-core-models
 ^EXIT=0$
 ^SIGNAL=0$
 .*coveredLines.: .*4
