@@ -106,8 +106,7 @@ public:
     const std::string &module) override;
 
   void replace_string_methods(symbol_tablet &context);
-  void replace_thread_blocks(symbol_tablet &context);
-  void convert_threadblock(codet& code, symbol_tablet &symbol_table);
+  void convert_threadblock(codet &code, symbol_tablet &symbol_table);
 
   virtual bool final(
     symbol_tablet &context) override;
