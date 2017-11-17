@@ -23,6 +23,9 @@ void jar_filet::initialize_file_index(java_class_loader_limitt &limit)
   }
 }
 
+/// This constructor creates a jar_file object whose contents
+/// are extracted from a memory buffer (byte array) as opposed
+/// to a jar file.
 jar_filet::jar_filet(
   java_class_loader_limitt &limit,
   const std::string &filename):

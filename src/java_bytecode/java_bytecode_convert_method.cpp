@@ -2712,7 +2712,9 @@ codet java_bytecode_convert_methodt::convert_instructions(
     // check if this is the end of a try block
     for(const auto &exception_row : method.exception_table)
     {
-      // add the CATCH-POP before the end of the try block
+      // add the CATCH-POP at the end of the try block
+      // i.e. before the next bytecode instruction after
+      // the try block.
       if(cur_pc==exception_row.end_pc)
       {
         // have we already added a CATCH-POP for the current try-catch?
