@@ -31,7 +31,7 @@ import org.cprover.CProver;
 import sun.reflect.CallerSensitive;
 import sun.reflect.Reflection;
 
-public final class Class<T> {
+public final class Class<T> extends Object {
 
     private Class() {}
 

@@ -200,6 +200,17 @@ public class Thread implements Runnable {
 
     // /* For generating thread ID */
     private volatile static long threadSeqNumber;
+    
+    // Indicate which (if at all) waiting object is blocking this thread
+    // null if none
+    public Object blockingObject;
+    
+    // Maintains the state of the interrupt flag 
+    private boolean interruptFlag;
+    
+    // FIXME: This should be implemented using rezisable arrays (infinite arrays in cbmc)
+    // For the moment we presume there will be no more than 32 threads.
+    private static Thread[] threads=new Thread[32];
 
     // /* Java thread status for tools,
     //  * initialized to indicate thread 'not yet started'
@@ -251,12 +262,20 @@ public class Thread implements Runnable {
     //  */
     // public final static int MAX_PRIORITY = 10;
 
-    // /**
-    //  * Returns a reference to the currently executing thread object.
-    //  *
-    //  * @return  the currently executing thread.
-    //  */
-    // public static native Thread currentThread();
+     /**
+      * Returns a reference to the currently executing thread object.
+      *
+      * @return  the currently executing thread.
+      */
+     public static Thread currentThread()
+     {
+       int id=CProver.getCurrentThreadID();
+       
+       // FIXME: Currently we have limited threads so must 
+       // check for out of bounds errors
+       if (id < 32) return threads[id];
+       return null;
+     }
 
     /**
      * A hint to the scheduler that the current thread is willing to yield
@@ -710,6 +729,11 @@ public class Thread implements Runnable {
         CProver.startThread(333);
         target.run();
         CProver.endThread(333);
+        int id=CProver.getCurrentThreadID();
+        // FIXME: we need to deal with variable size arrays here,
+        // but for the moment we limit thread starts to 32
+        if (id<32) threads[id]=this;
+        
         // /**
         //  * This method is not invoked for the main method thread or "system"
         //  * group threads created/set up by the VM. Any new functionality added
@@ -890,107 +914,111 @@ public class Thread implements Runnable {
     //     throw new UnsupportedOperationException();
     // }
 
-    // /**
-    //  * Interrupts this thread.
-    //  *
-    //  * <p> Unless the current thread is interrupting itself, which is
-    //  * always permitted, the {@link #checkAccess() checkAccess} method
-    //  * of this thread is invoked, which may cause a {@link
-    //  * SecurityException} to be thrown.
-    //  *
-    //  * <p> If this thread is blocked in an invocation of the {@link
-    //  * Object#wait() wait()}, {@link Object#wait(long) wait(long)}, or {@link
-    //  * Object#wait(long, int) wait(long, int)} methods of the {@link Object}
-    //  * class, or of the {@link #join()}, {@link #join(long)}, {@link
-    //  * #join(long, int)}, {@link #sleep(long)}, or {@link #sleep(long, int)},
-    //  * methods of this class, then its interrupt status will be cleared and it
-    //  * will receive an {@link InterruptedException}.
-    //  *
-    //  * <p> If this thread is blocked in an I/O operation upon an {@link
-    //  * java.nio.channels.InterruptibleChannel InterruptibleChannel}
-    //  * then the channel will be closed, the thread's interrupt
-    //  * status will be set, and the thread will receive a {@link
-    //  * java.nio.channels.ClosedByInterruptException}.
-    //  *
-    //  * <p> If this thread is blocked in a {@link java.nio.channels.Selector}
-    //  * then the thread's interrupt status will be set and it will return
-    //  * immediately from the selection operation, possibly with a non-zero
-    //  * value, just as if the selector's {@link
-    //  * java.nio.channels.Selector#wakeup wakeup} method were invoked.
-    //  *
-    //  * <p> If none of the previous conditions hold then this thread's interrupt
-    //  * status will be set. </p>
-    //  *
-    //  * <p> Interrupting a thread that is not alive need not have any effect.
-    //  *
-    //  * @throws  SecurityException
-    //  *          if the current thread cannot modify this thread
-    //  *
-    //  * @revised 6.0
-    //  * @spec JSR-51
-    //  */
-    // // public void interrupt() {
-    // //    CProver.assume(false);`
-    // //     // if (this != Thread.currentThread())
-    // //     //     checkAccess();
+     /**
+      * Interrupts this thread.
+      *
+      * <p> Unless the current thread is interrupting itself, which is
+      * always permitted, the {@link #checkAccess() checkAccess} method
+      * of this thread is invoked, which may cause a {@link
+      * SecurityException} to be thrown.
+      *
+      * <p> If this thread is blocked in an invocation of the {@link
+      * Object#wait() wait()}, {@link Object#wait(long) wait(long)}, or {@link
+      * Object#wait(long, int) wait(long, int)} methods of the {@link Object}
+      * class, or of the {@link #join()}, {@link #join(long)}, {@link
+      * #join(long, int)}, {@link #sleep(long)}, or {@link #sleep(long, int)},
+      * methods of this class, then its interrupt status will be cleared and it
+      * will receive an {@link InterruptedException}.
+      *
+      * <p> If this thread is blocked in an I/O operation upon an {@link
+      * java.nio.channels.InterruptibleChannel InterruptibleChannel}
+      * then the channel will be closed, the thread's interrupt
+      * status will be set, and the thread will receive a {@link
+      * java.nio.channels.ClosedByInterruptException}.
+      *
+      * <p> If this thread is blocked in a {@link java.nio.channels.Selector}
+      * then the thread's interrupt status will be set and it will return
+      * immediately from the selection operation, possibly with a non-zero
+      * value, just as if the selector's {@link
+      * java.nio.channels.Selector#wakeup wakeup} method were invoked.
+      *
+      * <p> If none of the previous conditions hold then this thread's interrupt
+      * status will be set. </p>
+      *
+      * <p> Interrupting a thread that is not alive need not have any effect.
+      *
+      * @throws  SecurityException
+      *          if the current thread cannot modify this thread
+      *
+      * @revised 6.0
+      * @spec JSR-51
+      */
+      public void interrupt() {
+     //     // if (this != Thread.currentThread())
+     //     //     checkAccess();
+        interruptFlag=true;
+     
+     //     // synchronized (blockerLock) {
+     //     //     Interruptible b = blocker;
+     //     //     if (b != null) {
+     //     //         interrupt0();           // Just to set the interrupt flag
+     //     //         b.interrupt(this);
+     //     //         return;
+     //     //     }
+     //     // }
+     //     // interrupt0();
+      }
 
-    // //     // synchronized (blockerLock) {
-    // //     //     Interruptible b = blocker;
-    // //     //     if (b != null) {
-    // //     //         interrupt0();           // Just to set the interrupt flag
-    // //     //         b.interrupt(this);
-    // //     //         return;
-    // //     //     }
-    // //     // }
-    // //     // interrupt0();
-    // // }
+     /**
+      * Tests whether the current thread has been interrupted.  The
+      * <i>interrupted status</i> of the thread is cleared by this method.  In
+      * other words, if this method were to be called twice in succession, the
+      * second call would return false (unless the current thread were
+      * interrupted again, after the first call had cleared its interrupted
+      * status and before the second call had examined it).
+      *
+      * <p>A thread interruption ignored because a thread was not alive
+      * at the time of the interrupt will be reflected by this method
+      * returning false.
+      *
+      * @return  <code>true</code> if the current thread has been interrupted;
+      *          <code>false</code> otherwise.
+      * @see #isInterrupted()
+      * @revised 6.0
+      */
+      public static boolean interrupted() {
+        CProver.assume(false);
+        return currentThread().isInterrupted(true);
+      }
 
-    // /**
-    //  * Tests whether the current thread has been interrupted.  The
-    //  * <i>interrupted status</i> of the thread is cleared by this method.  In
-    //  * other words, if this method were to be called twice in succession, the
-    //  * second call would return false (unless the current thread were
-    //  * interrupted again, after the first call had cleared its interrupted
-    //  * status and before the second call had examined it).
-    //  *
-    //  * <p>A thread interruption ignored because a thread was not alive
-    //  * at the time of the interrupt will be reflected by this method
-    //  * returning false.
-    //  *
-    //  * @return  <code>true</code> if the current thread has been interrupted;
-    //  *          <code>false</code> otherwise.
-    //  * @see #isInterrupted()
-    //  * @revised 6.0
-    //  */
-    // // public static boolean interrupted() {
-    // //     CProver.assume(false);
-    // //     return false;
-    // //     // return currentThread().isInterrupted(true);
-    // // }
+    /**
+      * Tests whether this thread has been interrupted.  The <i>interrupted
+      * status</i> of the thread is unaffected by this method.
+      *
+      * <p>A thread interruption ignored because a thread was not alive
+      * at the time of the interrupt will be reflected by this method
+      * returning false.
+      *
+      * @return  <code>true</code> if this thread has been interrupted;
+      *          <code>false</code> otherwise.
+      * @see     #interrupted()
+      * @revised 6.0
+      */
+      public boolean isInterrupted() {
+          return isInterrupted(false);
+      }
 
-    // /**
-    //  * Tests whether this thread has been interrupted.  The <i>interrupted
-    //  * status</i> of the thread is unaffected by this method.
-    //  *
-    //  * <p>A thread interruption ignored because a thread was not alive
-    //  * at the time of the interrupt will be reflected by this method
-    //  * returning false.
-    //  *
-    //  * @return  <code>true</code> if this thread has been interrupted;
-    //  *          <code>false</code> otherwise.
-    //  * @see     #interrupted()
-    //  * @revised 6.0
-    //  */
-    // // public boolean isInterrupted() {
-    // //     return isInterrupted(false);
-    // // }
-
-    // /**
-    //  * Tests if some Thread has been interrupted.  The interrupted state
-    //  * is reset or not based on the value of ClearInterrupted that is
-    //  * passed.
-    //  */
-    // // private native boolean isInterrupted(boolean ClearInterrupted);
+     /**
+      * Tests if some Thread has been interrupted.  The interrupted state
+      * is reset or not based on the value of ClearInterrupted that is
+      * passed.
+      */
+      private boolean isInterrupted(boolean ClearInterrupted)
+      {
+        boolean result=interruptFlag;
+        if (ClearInterrupted) interruptFlag=false;
+        return result;
+      }
 
     // /**
     //  * Throws {@link NoSuchMethodError}.
