@@ -17,13 +17,13 @@ Author: Diffblue
 #include "symbol_table.h"
 #include "std_code.h"
 
-class code_visitort : public expr_visitort
+class code_visitort:public expr_visitort
 {
 public:
   typedef std::function<void(codet&)> callbackt;
   typedef std::map<irep_idt, callbackt> callmapt;
 
-  code_visitort(callmapt& cv) : call_map(cv) {}
+  explicit code_visitort(callmapt& cv) : call_map(cv) {}
 
   void visit_symbols(symbol_tablet &symbol_table)
   {

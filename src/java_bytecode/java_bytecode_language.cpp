@@ -456,7 +456,8 @@ static const symbolt& add_or_get_symbol(symbol_tablet& symbol_table,
 ///
 /// \param code: codet, should be ID_function_call
 /// \param symbol_table: a symbol table
-void java_bytecode_languaget::convert_threadblock(codet &code, symbol_tablet &symbol_table)
+void java_bytecode_languaget::convert_threadblock(codet &code,
+  symbol_tablet &symbol_table)
 {
   PRECONDITION(code.get_statement()==ID_function_call);
   namespacet ns(symbol_table);
