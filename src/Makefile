@@ -4,7 +4,7 @@ DIRS = ansi-c big-int cbmc cpp goto-cc goto-instrument goto-programs \
        json goto-analyzer jsil goto-diff clobber \
        memory-models miniz
 
-all: cbmc.dir goto-cc.dir goto-instrument.dir goto-analyzer.dir goto-diff.dir
+all: cbmc.dir goto-cc.dir goto-instrument.dir goto-analyzer.dir goto-diff.dir java-models
 
 ###############################################################################
 
@@ -37,6 +37,9 @@ goto-diff.dir: languages goto-programs.dir pointer-analysis.dir \
                linking.dir analyses.dir solvers.dir json.dir
 
 goto-cc.dir: languages pointer-analysis.dir goto-programs.dir linking.dir
+
+java-models:
+	$(MAKE) $(MAKEARGS) -C "java_bytecode/library"
 
 # building for a particular directory
 
