@@ -573,7 +573,7 @@ bool java_bytecode_languaget::final(symbol_tablet &symbol_table)
   code_visitort::callmapt map;
   code_visitort::callbackt f=
     std::bind(&java_bytecode_languaget::convert_threadblock,
-      this, std::placeholders::_1, symbol_table);
+      this, std::placeholders::_1, std::ref(symbol_table));
   map.insert({ID_function_call, f});
   code_visitort thread_block_visitor(map);
   thread_block_visitor.visit_symbols(symbol_table);

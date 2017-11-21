@@ -992,9 +992,19 @@ exprt java_bytecode_convert_methodt::get_or_create_clinit_wrapper(
   symbolt bool_local;
   if(findit==symbol_table.symbols.end())
   {
-    bool_local=add_new_symbol(symbol_table,
-      "__CPROVER_was_ready","__CPROVER_was_ready",
-      bool_typet(), false_exprt(), false, false);
+    const irep_idt& name="__CPROVER_was_ready";
+    bool_local.name=name;
+    bool_local.pretty_name=name;
+    bool_local.base_name=name;
+    bool_local.type=bool_typet();
+    bool_local.value=false_exprt();
+    bool_local.is_lvalue=true;
+    bool_local.is_file_local=true;
+    bool_local.is_state_var=false;
+    bool_local.is_static_lifetime=false;
+    bool_local.is_thread_local=true;
+    bool_local.mode=ID_java;
+    symbol_table.add(bool_local);
   }
   else
   {

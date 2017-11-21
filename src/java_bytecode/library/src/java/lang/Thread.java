@@ -132,8 +132,7 @@ import org.cprover.CProver;
  * @see     #stop()
  * @since   JDK1.0
  */
-public
-class Thread {
+public class Thread implements Runnable {
     // /* Make sure registerNatives is the first thing <clinit> does. */
     // private static native void registerNatives();
     // static {
@@ -448,11 +447,11 @@ class Thread {
      * name. Automatically generated names are of the form
      * {@code "Thread-"+}<i>n</i>, where <i>n</i> is an integer.
      */
-    // public Thread() {
-    //      this.target = null;
-    //     // this.thread_id+=1;
-    //     // init(null, null, "Thread-" + nextThreadNum(), 0);
-    // }
+    public Thread() {
+        target = this;
+        tid = ++threadSeqNumber;
+        // init(null, null, "Thread-" + nextThreadNum(), 0);
+     }
 
     /**
      * Allocates a new {@code Thread} object. This constructor has the same
@@ -756,13 +755,15 @@ class Thread {
      * @see     #stop()
      * @see     #Thread(ThreadGroup, Runnable, String)
      */
-    // @Override
-    // public void run()
-    // {
-    //   if (target != null) {
-    //     target.run();
-    //   }
-    // }
+     @Override
+     public void run()
+     {
+       // TODO: FIX, uncommenting the following code leads to infinite recursion.
+       assert(false);
+       // if (target != null) {
+       //   target.run();
+       // }
+     }
 
     /**
      * This method is called by the system to give a Thread
