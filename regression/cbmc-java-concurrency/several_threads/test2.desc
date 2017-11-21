@@ -1,0 +1,6 @@
+CORE
+A.class
+--function A.me2 --lazy-methods --classpath .:../../../src/java_bytecode/library/core-models.jar
+
+^SIGNAL=0$
+^VERIFICATION FAILED
