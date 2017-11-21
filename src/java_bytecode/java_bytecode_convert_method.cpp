@@ -988,9 +988,9 @@ exprt java_bytecode_convert_methodt::get_or_create_clinit_wrapper(
      true, true);
 
   // create/reuse local variable.
-  auto findit2=symbol_table.symbols.find("__CPROVER_was_ready");
+  auto find_was_ready=symbol_table.symbols.find("__CPROVER_was_ready");
   symbolt bool_local;
-  if(findit==symbol_table.symbols.end())
+  if(find_was_ready==symbol_table.symbols.end())
   {
     const irep_idt& name="__CPROVER_was_ready";
     bool_local.name=name;
@@ -1008,7 +1008,7 @@ exprt java_bytecode_convert_methodt::get_or_create_clinit_wrapper(
   }
   else
   {
-    bool_local=findit2->second;
+    bool_local=find_was_ready->second;
   }
 
   code_blockt function_body;

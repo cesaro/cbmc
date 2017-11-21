@@ -1,0 +1,6 @@
+CORE
+A.class
+--function "A.me2:()V" --lazy-methods
+
+^SIGNAL=0$
+^VERIFICATION FAILED
