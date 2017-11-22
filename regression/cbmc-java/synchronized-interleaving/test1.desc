@@ -1,0 +1,8 @@
+CORE
+Sync.class
+--function "Sync.test1:()V" --lazy-methods
+VERIFICATION FAILED
+--
+^warning: ignoring
+--
+Checks that the interleaving between two threads runs the main thread first and the auxiliary thread second.

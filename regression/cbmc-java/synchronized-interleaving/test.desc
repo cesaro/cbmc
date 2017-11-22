@@ -1,6 +1,6 @@
 CORE
 Sync.class
---function "Sync.f:()V" --lazy-methods
+--function "Sync.run:()J" --lazy-methods
 VERIFICATION SUCCESSFUL
 --
 ^warning: ignoring

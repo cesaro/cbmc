@@ -30,7 +30,7 @@ public class Sync {
     }
   }
   
-  public static void f() throws InterruptedException
+  public static long run() throws InterruptedException
   {
     boolean threadFirst;
     final Sync o = new Sync();
@@ -39,17 +39,26 @@ public class Sync {
     o.test();
     if (o.finalCounter==1)
       o.firstPass=0;
+    CProver.assume(thread.done);
     thread.join();
     if (thread.done)
     {
       assert(o.done);
-//      assert(o.firstPass>0);
+      assert(o.firstPass>=0);
       assert(o.finalCounter<=2);
-      /*if (o.firstPass==CProver.getCurrentThreadID())
-        threadFirst=true;
-      else
-        threadFirst=false;*/
+      return o.firstPass;
     }
+    return -1;
+  }
+  
+  public static void test1() throws InterruptedException
+  {
+    assert(run()==0);
+  }
+  
+  public static void test2() throws InterruptedException
+  {
+    assert(run()==1);
   }
 }
 
