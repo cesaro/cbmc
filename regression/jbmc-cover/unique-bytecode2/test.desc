@@ -1,10 +1,9 @@
 KNOWNBUG
 Test.class
---cover location --show-properties --verbosity 10
+--cover location --lazy-methods --show-properties --verbosity 10
 ^EXIT=0$
 ^SIGNAL=0$
---
-^java::Test\.<clinit>:\(\)V block 2, location 4: bytecode-index 1 already instrumented
+^java::Test\.<clinit>:\(\)V block 2, location \d+: bytecode-index 1 already instrumented
 ^Ignoring block 2 location .* file Test\.java line 2 function java::Test\.<clinit>:\(\)V bytecode-index .* \(bytecode-index already instrumented\)
 --
 Both lines fail after the previous commit. Don't know why.
