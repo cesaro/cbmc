@@ -1,0 +1,8 @@
+CORE
+Sync.class
+--function "Sync.f:()V" --lazy-methods
+VERIFICATION SUCCESSFUL
+--
+^warning: ignoring
+--
+Checks that cbmc does not create interleavings in synchronized methods with the same locking object.
