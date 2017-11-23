@@ -457,7 +457,7 @@ void java_bytecode_languaget::convert_threadblock(codet &code,
     const exprt &expr=f_code.arguments()[0];
     const std::string& v_str=expr.op0().get_string(ID_value);
     mp_integer v=binary2integer(v_str, false);
-    // java does not have labels so this this is safe.
+    // java does not have labels so choosing these names is safe.
     const std::string &lbl1="TS_1_"+integer2string(v);
     const std::string &lbl2="TS_2_"+integer2string(v);
 
