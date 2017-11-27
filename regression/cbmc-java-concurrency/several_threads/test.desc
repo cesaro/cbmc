@@ -1,6 +1,6 @@
 CORE
 A.class
---function "A.me:()V" --lazy-methods --classpath .:../../../src/java_bytecode/library/core-models.jar:.
+--function A.me --lazy-methods --classpath .:../../../src/java_bytecode/library/core-models.jar
 
 ^EXIT=0$
 ^SIGNAL=0$
