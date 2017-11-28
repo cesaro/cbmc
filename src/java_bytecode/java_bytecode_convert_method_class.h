@@ -160,7 +160,7 @@ protected:
   void push(const exprt::operandst &o);
 
   /// Determines whether the `method` is a constructor or a static initializer,
-  /// by checking whether its name equals either <init> or <clinit>
+  /// by checking whether its name equals either `<init>` or `<clinit>`
   bool is_constructor(const class_typet::methodt &method);
 
   /// Returns true iff the slot index of the local variable of a method (coming
@@ -252,14 +252,18 @@ protected:
     const irep_idt &basename);
 
   bool class_needs_clinit(const irep_idt &classname);
-  exprt get_or_create_clinit_wrapper(const irep_idt &classname);
-  codet get_clinit_call(const irep_idt &classname);
+  exprt get_or_create_clinit_wrapper(
+    const irep_idt &classname,
+    const irep_idt &caller_method_name);
+  codet get_clinit_call(
+    const irep_idt &classname,
+    const irep_idt &caller_method_name);
 
   bool is_method_inherited(
     const irep_idt &classname,
     const irep_idt &methodid) const;
 
-  enum class bytecode_write_typet { VARIABLE, ARRAY_REF, STATIC_FIELD, FIELD};
+  enum class bytecode_write_typet {VARIABLE, ARRAY_REF, STATIC_FIELD, FIELD};
   void save_stack_entries(
     const std::string &,
     const typet &,
