@@ -271,6 +271,15 @@ bool java_bytecode_languaget::typecheck(
 
   instantiate_generics(get_message_handler(), symbol_table);
 
+  // Deal with org.cprover.CProver.startThread() and endThread()
+  code_visitort::callmapt map;
+  code_visitort::callbackt f=
+    std::bind(&java_bytecode_languaget::convert_threadblock,
+      this, std::placeholders::_1, std::ref(symbol_table));
+  map.insert({ID_function_call, f});
+  code_visitort thread_block_visitor(map);
+  thread_block_visitor.visit_symbols(symbol_table);
+
   return res;
 }
 
@@ -416,36 +425,6 @@ void java_bytecode_languaget::replace_string_methods(
   }
 }
 
-static const symbolt& add_or_get_symbol(symbol_tablet& symbol_table,
-  const std::string& sym_name,
-  const bool bstatic,
-  const bool bthread_local)
-{
-  const symbolt* ptr_symbol = nullptr;
-  namespacet ns(symbol_table);
-  ns.lookup(sym_name, ptr_symbol);
-  if(ptr_symbol != nullptr)
-  {
-    INVARIANT(ptr_symbol != nullptr, "ERROR");
-    return *ptr_symbol;
-  }
-
-  mp_integer initial_value(0);
-
-  symbolt symbol;
-  symbol.name=sym_name;
-  symbol.base_name=sym_name;
-  symbol.pretty_name=sym_name;
-  symbol.type=java_int_type();
-  symbol.is_static_lifetime=bstatic;
-  symbol.is_thread_local=bthread_local;
-  symbol.is_lvalue=true;
-  symbol.value=from_integer(initial_value, java_int_type());
-  symbol.mode=ID_java;
-  symbol_table.add(symbol);
-  return ns.lookup(sym_name);
-}
-
 /// This function will recursively look for a thread block.
 /// In this context, a thread block is defined as any code
 /// that is in between a call to CProver.startThread:(I)V
@@ -488,14 +467,16 @@ void java_bytecode_languaget::convert_threadblock(codet &code,
     // B: goto : TS_2_<ID>
     // C: label (TS_1_<ID>)
     // C.1 codet(ID_atomic_begin)
-    // D: __CPROVER_thread_id=__CPROVER_next_thread_id
-    // E: __CPROVER_next_thread_id+=1;
-    // E.1 codet(ID_atomic_end)
+    // D: __CPROVER_next_thread_id+=1;
+    // E: __CPROVER_thread_id=__CPROVER_next_thread_id
+    // F.1 codet(ID_atomic_end)
 
     const symbolt& next_symbol=
-      add_or_get_symbol(symbol_table, next_thread_id, true, false);
+      add_or_get_symbol(symbol_table, next_thread_id, next_thread_id,
+        java_int_type(), from_integer(mp_zero, java_int_type()), false, true);
     const symbolt& current_symbol=
-      add_or_get_symbol(symbol_table, thread_id, false, true);
+      add_or_get_symbol(symbol_table, thread_id, thread_id,
+        java_int_type(), from_integer(mp_zero, java_int_type()), true, true);
 
     codet tmp_a(ID_start_thread);
     tmp_a.set(ID_destination, lbl1);
@@ -506,8 +487,8 @@ void java_bytecode_languaget::convert_threadblock(codet &code,
     exprt plus(ID_plus, java_int_type());
     plus.copy_to_operands(next_symbol.symbol_expr());
     plus.copy_to_operands(from_integer(1, java_int_type()));
-    code_assignt tmp_d(current_symbol.symbol_expr(), next_symbol.symbol_expr());
-    code_assignt tmp_e(next_symbol.symbol_expr(), plus);
+    code_assignt tmp_d(next_symbol.symbol_expr(), plus);
+    code_assignt tmp_e(current_symbol.symbol_expr(), next_symbol.symbol_expr());
 
     code_blockt block;
     block.add(tmp_a);
@@ -551,8 +532,11 @@ void java_bytecode_languaget::convert_threadblock(codet &code,
   {
     INVARIANT(f_code.arguments().size()==0,
       "ERROR: CProver.getCurrentThreadID invalid number of arguments");
+
     const symbolt& current_symbol=
-      add_or_get_symbol(symbol_table, thread_id, false, true);
+      add_or_get_symbol(symbol_table, thread_id, thread_id,
+        java_int_type(), from_integer(mp_zero, java_int_type()), true, true);
+
     code_assignt code_assign(f_code.lhs(), current_symbol.symbol_expr());
     code_assign.add_source_location()=code.source_location();
     code=code_assign;
@@ -568,15 +552,6 @@ bool java_bytecode_languaget::final(symbol_tablet &symbol_table)
   // Symbols that have code type are potentialy to be replaced
   // replace code of String methods calls by code we generate
   replace_string_methods(symbol_table);
-
-  // Deal with org.cprover.CProver.startThread() and endThread()
-  code_visitort::callmapt map;
-  code_visitort::callbackt f=
-    std::bind(&java_bytecode_languaget::convert_threadblock,
-      this, std::placeholders::_1, std::ref(symbol_table));
-  map.insert({ID_function_call, f});
-  code_visitort thread_block_visitor(map);
-  thread_block_visitor.visit_symbols(symbol_table);
 
   java_bytecode_synchronizet synchronizer(symbol_table);
 
@@ -661,3 +636,37 @@ bool java_bytecode_languaget::to_expr(
 java_bytecode_languaget::~java_bytecode_languaget()
 {
 }
+
+/// Utility method
+/// Adds a new symbol to the symbol table if
+/// it doesn't exist. Otherwise, returns
+/// existing one.
+symbolt java_bytecode_languaget::add_or_get_symbol(
+  symbol_tablet& symbol_table,
+  const irep_idt& name,
+  const irep_idt& base_name,
+  const typet& type,
+  const exprt& value,
+  const bool is_thread_local,
+  const bool is_static_lifetime)
+{
+  const symbolt* psymbol = nullptr;
+  namespacet ns(symbol_table);
+  ns.lookup(name, psymbol);
+  if(psymbol != nullptr)
+    return *psymbol;
+  symbolt new_symbol;
+  new_symbol.name=name;
+  new_symbol.pretty_name=name;
+  new_symbol.base_name=base_name;
+  new_symbol.type=type;
+  new_symbol.value=value;
+  new_symbol.is_lvalue=true;
+  new_symbol.is_state_var=true;
+  new_symbol.is_static_lifetime=is_static_lifetime;
+  new_symbol.is_thread_local=is_thread_local;
+  new_symbol.mode=ID_java;
+  symbol_table.add(new_symbol);
+  return new_symbol;
+}
+
