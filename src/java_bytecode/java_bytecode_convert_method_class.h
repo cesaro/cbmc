@@ -160,7 +160,7 @@ protected:
   void push(const exprt::operandst &o);
 
   /// Determines whether the `method` is a constructor or a static initializer,
-  /// by checking whether its name equals either <init> or <clinit>
+  /// by checking whether its name equals either `<init>` or `<clinit>`
   bool is_constructor(const class_typet::methodt &method);
 
   /// Returns true iff the slot index of the local variable of a method (coming
