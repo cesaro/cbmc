@@ -108,6 +108,15 @@ public:
   void replace_string_methods(symbol_tablet &context);
   void convert_threadblock(codet &code, symbol_tablet &symbol_table);
 
+  static symbolt add_or_get_symbol(
+    symbol_tablet& symbol_table,
+    const irep_idt& name,
+    const irep_idt& base_name,
+    const typet& type,
+    const exprt& value,
+    const bool is_thread_local,
+    const bool is_static_lifetime);
+
   virtual bool final(
     symbol_tablet &context) override;
 
