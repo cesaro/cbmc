@@ -3,16 +3,17 @@ covered1.class
 --cover location --json-ui --show-properties
 ^EXIT=0$
 ^SIGNAL=0$
-.*\"coveredLines\": \"22\",$
-.*\"coveredLines\": \"4,6,7,23-25,31-33,36\",$
-.*\"coveredLines\": \"26\",$
-.*\"coveredLines\": \"28\",$
-.*\"coveredLines\": \"28\",$
-.*\"coveredLines\": \"28\",$
-.*\"coveredLines\": \"28\",$
-.*\"coveredLines\": \"29\",$
-.*\"coveredLines\": \"18\",$
-.*\"coveredLines\": \"18\",$
-.*\"coveredLines\": \"35\",$
+.*coveredLines.: .*4
+.*coveredLines.: .*6
+.*coveredLines.: .*7
+.*coveredLines.: .*9
+.*coveredLines.: .*18
+.*coveredLines.: .*23-25
+.*coveredLines.: .*26
+.*coveredLines.: .*28
+.*coveredLines.: .*31-33
+.*coveredLines.: .*35
+.*coveredLines.: .*36
 --
 ^warning: ignoring
+.*coveredLines.: .*1[234]
