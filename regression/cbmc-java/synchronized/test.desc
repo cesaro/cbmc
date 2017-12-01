@@ -1,9 +1,8 @@
-KNOWNBUG
+CORE
+--show-goto-functions
 Sync.class
-
-^EXIT=0$
-^SIGNAL=0$
-^VERIFICATION SUCCESSFUL$
+ATOMIC_BEGIN
+ATOMIC_END
 --
 ^warning: ignoring
 --

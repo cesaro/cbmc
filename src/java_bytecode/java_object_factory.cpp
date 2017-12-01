@@ -460,7 +460,8 @@ public:
   /// Initialize a recursion-set entry owner operating on a given set.
   /// Initially it does not own any set entry.
   /// \param _recursion_set: set to operate on.
-  recursion_set_entryt(std::unordered_set<irep_idt, irep_id_hash> &_recursion_set):
+  explicit recursion_set_entryt(
+      std::unordered_set<irep_idt, irep_id_hash> &_recursion_set):
     recursion_set(_recursion_set)
   { }
 
@@ -835,6 +836,8 @@ void java_object_factoryt::gen_nondet_struct_init(
     }
     else if(struct_tag=="java.lang.Object")
     {
+      // We zero-initialize all fields in Object because they are
+      // not meant to be nondet.
       if(update_in_place==update_in_placet::MUST_UPDATE_IN_PLACE)
         continue;
       code_assignt code(me, from_integer(0, me.type()));

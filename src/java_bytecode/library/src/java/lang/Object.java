@@ -147,25 +147,30 @@ public class Object {
 
     protected void finalize() throws Throwable { }
     
-    public void monitorenter()
+    public static void monitorenter(Object object)
     {
-      int id=0;// Thread.currentThread.getId();
+      if (object == null) //FIXME : remove last entry of the stack trace
+        throw new NullPointerException();
+      int id=CProver.getCurrentThreadID();
       CProver.atomicBegin();
-      CProver.assume((monitorCount == 0)
-        || (holdingThreadId==id));
-      monitorCount++;
-      holdingThreadId=id;
+      CProver.assume((object.monitorCount == 0)
+        || (object.holdingThreadId==id));
+      object.monitorCount++;
+      object.holdingThreadId=id;
       CProver.atomicEnd();
     }
 
-    public void monitorexit()
+    public static void monitorexit(Object object)
     {
-      if (monitorCount == 0)
+/*
+      if (object == null) //FIXME : this should throw outside
+        throw new NullPointerException();
+      if (object.monitorCount == 0)
       {
         throw new IllegalMonitorStateException();
-      }
+      }*/
       CProver.atomicBegin();
-      monitorCount--;
+      object.monitorCount--;
       CProver.atomicEnd();
     }
 

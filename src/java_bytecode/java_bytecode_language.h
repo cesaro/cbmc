@@ -22,6 +22,8 @@ Author: Daniel Kroening, kroening@kroening.com
 #include <java_bytecode/select_pointer_type.h>
 
 #define JAVA_BYTECODE_LANGUAGE_OPTIONS /*NOLINT*/ \
+  "(prefer-core-models)"                          \
+  "(no-core-models)"                              \
   "(java-assume-inputs-non-null)"                 \
   "(java-throw-runtime-exceptions)"               \
   "(java-max-input-array-length):"                \
@@ -31,20 +33,23 @@ Author: Daniel Kroening, kroening@kroening.com
   "(lazy-methods)"                                \
   "(lazy-methods-extra-entry-point):"
 
-#define JAVA_BYTECODE_LANGUAGE_OPTIONS_HELP /*NOLINT*/                                          \
-  " --java-assume-inputs-non-null    never initialize reference-typed parameter to the\n"       \
-  "                                  entry point with null\n"                                   \
-  " --java-throw-runtime-exceptions  make implicit runtime exceptions explicit\n"               \
-  " --java-max-input-array-length N  limit input array size to <= N\n"                          \
-  " --java-max-input-tree-depth N    object references are (deterministically) set to null in\n"\
-  "                                  the object\n"                                              \
-  " --java-max-vla-length            limit the length of user-code-created arrays\n"            \
-  " --java-cp-include-files          regexp or JSON list of files to load (with '@' prefix)\n"  \
-  " --lazy-methods                   only translate methods that appear to be reachable from\n" \
-  "                                  the --function entry point or main class\n"                \
-  " --lazy-methods-extra-entry-point METHODNAME\n"                                              \
-  "                                  treat METHODNAME as a possible program entry point for\n"  \
-  "                                  the purpose of lazy method loading\n"                      \
+#define JAVA_BYTECODE_LANGUAGE_OPTIONS_HELP /* NOLINT*/ \
+  " --prefer-core-models             load core models first, overriding any external\n"          /* NOLINT(*) */ \
+  "                                  java.lang.* classes also contained in the core models\n"    /* NOLINT(*) */ \
+  " --no-core-models                 don't load the internally provided core models\n"           /* NOLINT(*) */ \
+  " --java-assume-inputs-non-null    never initialize reference-typed parameter to the\n"        /* NOLINT(*) */ \
+  "                                  entry point with null\n"                                    /* NOLINT(*) */ \
+  " --java-throw-runtime-exceptions  make implicit runtime exceptions explicit\n"                /* NOLINT(*) */ \
+  " --java-max-input-array-length N  limit input array size to <= N\n"                           /* NOLINT(*) */ \
+  " --java-max-input-tree-depth N    object references are (deterministically) set to null in\n" /* NOLINT(*) */ \
+  "                                  the object\n"                                               /* NOLINT(*) */ \
+  " --java-max-vla-length            limit the length of user-code-created arrays\n"             /* NOLINT(*) */ \
+  " --java-cp-include-files          regexp or JSON list of files to load (with '@' prefix)\n"   /* NOLINT(*) */ \
+  " --lazy-methods                   only translate methods that appear to be reachable from\n"  /* NOLINT(*) */ \
+  "                                  the --function entry point or main class\n"                 /* NOLINT(*) */ \
+  " --lazy-methods-extra-entry-point METHODNAME\n"                                               /* NOLINT(*) */ \
+  "                                  treat METHODNAME as a possible program entry point for\n"   /* NOLINT(*) */ \
+  "                                  the purpose of lazy method loading\n"                       /* NOLINT(*) */ \
   "                                  A '.*' wildcard is allowed to specify all class members\n"
 
 #define MAX_NONDET_ARRAY_LENGTH_DEFAULT 5

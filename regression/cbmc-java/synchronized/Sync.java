@@ -1,10 +1,10 @@
 public class Sync {
   public static void main(String[] args) {
-    final Object o = null;
+    final Object o = new Object();
     try {
       synchronized (o) {}
-      assert false;
     } catch (NullPointerException e) {
+      assert false;
       return;
     }
   }

@@ -278,9 +278,9 @@ void java_bytecode_convert_method_lazy(
     member_type.set(ID_access, ID_private);
   else
     member_type.set(ID_access, ID_default);
-  if (m.is_synchronized)
+  if(m.is_synchronized)
     member_type.set(ID_is_synchronized, true);
-  if (m.is_static)
+  if(m.is_static)
     member_type.set(ID_is_static, true);
   if(method_symbol.base_name=="<init>")
   {
@@ -1543,6 +1543,20 @@ codet java_bytecode_convert_methodt::convert_instructions(
       loc.set_function(method_id);
       c.add_source_location()=loc;
     }
+    // replace calls to CProver.atomicBegin
+    else if(statement=="invokestatic" &&
+            id2string(arg0.get(ID_identifier))==
+            "java::org.cprover.CProver.atomicBegin:()V")
+    {
+      c=codet(ID_atomic_begin);
+    }
+    // replace calls to CProver.atomicEnd
+    else if(statement=="invokestatic" &&
+            id2string(arg0.get(ID_identifier))==
+            "java::org.cprover.CProver.atomicEnd:()V")
+    {
+      c=codet(ID_atomic_end);
+    }
     else if(statement=="invokeinterface" ||
             statement=="invokespecial" ||
             statement=="invokevirtual" ||
@@ -1651,7 +1665,9 @@ codet java_bytecode_convert_methodt::convert_instructions(
       //   accessible" than it actually is.
       irep_idt id=arg0.get(ID_identifier);
       if(symbol_table.symbols.find(id)==symbol_table.symbols.end() &&
-         !(is_virtual && is_method_inherited(arg0.get(ID_C_class), arg0.get(ID_component_name))))
+         !(is_virtual
+           && is_method_inherited(arg0.get(ID_C_class),
+                                  arg0.get(ID_component_name))))
       {
         symbolt symbol;
         symbol.name=id;
@@ -1701,8 +1717,7 @@ codet java_bytecode_convert_methodt::convert_instructions(
       // returning the same call otherwise
       c=string_preprocess.replace_character_call(call);
 
-      if(!use_this && id2string(arg0.get(ID_identifier))!=
-        "java::org.cprover.CProver.atomicEnd:()V")
+      if(!use_this)
       {
         codet clinit_call=get_clinit_call(arg0.get(ID_C_class), method_name);
         if(clinit_call.get_statement()!=ID_skip)
@@ -2617,14 +2632,18 @@ codet java_bytecode_convert_methodt::convert_instructions(
       type.parameters().resize(1);
       type.parameters()[0].type()=java_reference_type(void_typet());
       code_function_callt call;
-      call.function()=symbol_exprt("java::java.lang.Object.monitorenter:()V", type);
+      call.function()=
+        symbol_exprt(
+          "java::java.lang.Object.monitorenter:(Ljava/lang/Object;)V",
+          type);
       call.lhs().make_nil();
       call.arguments().push_back(op[0]);
       call.add_source_location()=i_it->source_location;
       c=call;
       if(lazy_methods)
       {
-        lazy_methods->add_needed_method("java::java.lang.Object.monitorenter:()V");
+        lazy_methods->add_needed_method(
+          "java::java.lang.Object.monitorenter:(Ljava/lang/Object;)V");
       }
     }
     else if(statement=="monitorexit")
@@ -2635,14 +2654,18 @@ codet java_bytecode_convert_methodt::convert_instructions(
       type.parameters().resize(1);
       type.parameters()[0].type()=java_reference_type(void_typet());
       code_function_callt call;
-      call.function()=symbol_exprt("java::java.lang.Object.monitorexit:()V", type);
+      call.function()=
+        symbol_exprt(
+          "java::java.lang.Object.monitorexit:(Ljava/lang/Object;)V",
+          type);
       call.lhs().make_nil();
       call.arguments().push_back(op[0]);
       call.add_source_location()=i_it->source_location;
       c=call;
       if(lazy_methods)
       {
-        lazy_methods->add_needed_method("java::java.lang.Object.monitorexit:()V");
+        lazy_methods->add_needed_method(
+          "java::java.lang.Object.monitorexit:(Ljava/lang/Object;)V");
       }
     }
     else if(statement=="swap")
@@ -2737,10 +2760,10 @@ codet java_bytecode_convert_methodt::convert_instructions(
     // check if this is the end of a try block
     for(const auto &exception_row : method.exception_table)
     {
-      // add the CATCH-POP before the end of the try block
-      if(cur_pc<exception_row.end_pc &&
-         !working_set.empty() &&
-         *working_set.begin()==exception_row.end_pc)
+      // add the CATCH-POP at the end of the try block
+      // i.e. before the next bytecode instruction after
+      // the try block.
+      if(cur_pc==exception_row.end_pc)
       {
         // have we already added a CATCH-POP for the current try-catch?
         // (each row corresponds to a handler)
@@ -2754,8 +2777,8 @@ codet java_bytecode_convert_methodt::convert_instructions(
           // add CATCH_POP instruction
           code_pop_catcht catch_pop;
           code_blockt end_try_block;
-          end_try_block.move_to_operands(c);
           end_try_block.move_to_operands(catch_pop);
+          end_try_block.move_to_operands(c);
           c=end_try_block;
         }
       }
