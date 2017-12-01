@@ -66,6 +66,11 @@ public:
     return run(goto_functions);
   }
 
+  const bool has_threads()
+  {
+    return equation.has_threads();
+  }
+
 protected:
   const optionst &options;
   symbol_tablet new_symbol_table;
