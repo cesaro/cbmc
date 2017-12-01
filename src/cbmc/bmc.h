@@ -28,6 +28,7 @@ Author: Daniel Kroening, kroening@kroening.com
 #include <goto-programs/goto_trace.h>
 
 #include <goto-symex/symex_target_equation.h>
+#include <goto-symex/build_goto_trace.h>
 #include <goto-programs/safety_checker.h>
 #include <goto-symex/memory_model.h>
 
@@ -69,6 +70,21 @@ public:
     const goto_functionst &goto_functions)
   {
     return run(goto_functions);
+  }
+
+  const bool has_threads()
+  {
+    return equation.has_threads();
+  }
+
+  const goto_tracet get_goto_trace() const
+  {
+    goto_tracet trace;
+    build_goto_trace(equation,
+      equation.SSA_steps.end(),
+      prop_conv,
+      ns, trace);
+    return trace;
   }
 
 protected:
