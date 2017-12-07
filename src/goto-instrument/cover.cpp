@@ -1189,22 +1189,34 @@ std::set<exprt> collect_decisions(const goto_programt::const_targett t)
   return std::set<exprt>();
 }
 
-void instrument_cover_goals(
-  const symbol_tablet &symbol_table,
+/// Creates a class that contains coverage setting parameters
+/// calls to instrument_cover_goals in this class will set assert(false)
+/// at the locations defined by the initialized parameters.
+coverage_optionst::coverage_optionst(
+    const symbol_tablet &symbol_table,
+    const std::list<std::string> &cover_functions,
+    bool function_only,
+    bool ignore_trivial):
+  symbol_table(symbol_table),
+  criterion(coverage_criteriont::LOCATION),
+  function_only(function_only),
+  ignore_trivial(ignore_trivial)
+{
+  // Records the functions that need to be instrumented for coverage
+  for(auto &item : cover_functions)
+    functions.insert(item);
+}
+
+void coverage_optionst::instrument_cover_goals(
   goto_programt &goto_program,
-  coverage_criteriont criterion,
-  message_handlert &message_handler,
-  bool function_only)
+  message_handlert &message_handler)
 {
   coverage_goalst goals; // empty already covered goals
+  ignore_trivial=false;
   instrument_cover_goals(
-    symbol_table,
     goto_program,
-    criterion,
     message_handler,
-    goals,
-    function_only,
-    false);
+    goals);
 }
 
 /// Call a goto_program trivial unless it has: * Any declarations * At least 2
@@ -1233,14 +1245,10 @@ bool program_is_trivial(const goto_programt &goto_program)
   return true;
 }
 
-void instrument_cover_goals(
-  const symbol_tablet &symbol_table,
+void coverage_optionst::instrument_cover_goals(
   goto_programt &goto_program,
-  coverage_criteriont criterion,
   message_handlert &message_handler,
-  coverage_goalst &goals,
-  bool function_only,
-  bool ignore_trivial)
+  coverage_goalst &goals)
 {
   // exclude trivial coverage goals of a goto program
   if(ignore_trivial && program_is_trivial(goto_program))
@@ -1268,7 +1276,8 @@ void instrument_cover_goals(
     // instrumentation for the entry function
     bool cover_curr_function=
       !function_only ||
-      curr_function.find(config.main)!=std::string::npos;
+      curr_function.find(config.main)!=std::string::npos ||
+      functions.find(curr_function)!=functions.end();
 
     switch(criterion)
     {
@@ -1591,14 +1600,10 @@ void instrument_cover_goals(
   }
 }
 
-void instrument_cover_goals(
-  const symbol_tablet &symbol_table,
+void coverage_optionst::instrument_cover_goals(
   goto_functionst &goto_functions,
-  coverage_criteriont criterion,
   message_handlert &message_handler,
   coverage_goalst &goals,
-  bool function_only,
-  bool ignore_trivial,
   const std::string &cover_include_pattern)
 {
   std::smatch string_matcher;
@@ -1618,33 +1623,23 @@ void instrument_cover_goals(
       continue;
 
     instrument_cover_goals(
-      symbol_table,
       f_it->second.body,
-      criterion,
       message_handler,
-      goals,
-      function_only,
-      ignore_trivial);
+      goals);
   }
 }
 
-void instrument_cover_goals(
-  const symbol_tablet &symbol_table,
+void coverage_optionst::instrument_cover_goals(
   goto_functionst &goto_functions,
-  coverage_criteriont criterion,
-  message_handlert &message_handler,
-  bool function_only)
+  message_handlert &message_handler)
 {
   // empty set of existing goals
   coverage_goalst goals;
+  ignore_trivial=false;
   instrument_cover_goals(
-    symbol_table,
     goto_functions,
-    criterion,
     message_handler,
     goals,
-    function_only,
-    false,
     "");
 }
 
@@ -1739,16 +1734,18 @@ bool instrument_cover_goals(
 
   msg.status() << "Instrumenting coverage goals" << messaget::eom;
 
+  coverage_optionst cover_options(
+    symbol_table,
+    cmdline.get_values("cover-functions"),
+    cmdline.isset("cover-function-only"),
+    cmdline.isset("no-trivial-tests"));
   for(const auto &criterion : criteria)
   {
-    instrument_cover_goals(
-      symbol_table,
+    cover_options.set_criterion(criterion);
+    cover_options.instrument_cover_goals(
       goto_functions,
-      criterion,
       message_handler,
       existing_goals,
-      cmdline.isset("cover-function-only"),
-      cmdline.isset("no-trivial-tests"),
       cmdline.get_value("cover-include-pattern"));
   }
 
