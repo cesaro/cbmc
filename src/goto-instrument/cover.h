@@ -41,42 +41,50 @@ enum class coverage_criteriont
   LOCATION, BRANCH, DECISION, CONDITION,
   PATH, MCDC, ASSERTION, COVER };
 
+class coverage_optionst
+{
+public:
+  coverage_optionst(
+    const symbol_tablet &symbol_table,
+    const std::list<std::string> &cover_functions,
+    bool function_only=false,
+    bool ignore_trivial=false);
+
+  void instrument_cover_goals(
+    goto_functionst &,
+    message_handlert &message_handler);
+
+  void instrument_cover_goals(
+    goto_functionst &,
+    message_handlert &message_handler,
+    coverage_goalst &,
+    const std::string &cover_inclue_pattern="");
+
+  void instrument_cover_goals(
+    goto_programt &,
+    message_handlert &message_handler,
+    coverage_goalst &goals);
+
+  void instrument_cover_goals(
+    goto_programt &,
+    message_handlert &message_handler);
+
+  void set_criterion(coverage_criteriont criterion)
+  {
+    this->criterion=criterion;
+  }
+
+private:
+  const symbol_tablet &symbol_table;
+  std::set<std::string> functions;
+  coverage_criteriont criterion;
+  bool function_only;
+  bool ignore_trivial;
+};
+
 bool consider_goals(
   const goto_programt &,
   coverage_goalst &);
-
-void instrument_cover_goals(
-  const symbol_tablet &,
-  goto_functionst &,
-  coverage_criteriont,
-  message_handlert &message_handler,
-  bool function_only=false);
-
-void instrument_cover_goals(
-  const symbol_tablet &,
-  goto_programt &,
-  coverage_criteriont,
-  message_handlert &message_handler,
-  bool function_only=false);
-
-void instrument_cover_goals(
-  const symbol_tablet &,
-  goto_functionst &,
-  coverage_criteriont,
-  message_handlert &message_handler,
-  coverage_goalst &,
-  bool function_only=false,
-  bool ignore_trivial=false,
-  const std::string &cover_inclue_pattern="");
-
-void instrument_cover_goals(
-  const symbol_tablet &,
-  goto_programt &,
-  coverage_criteriont,
-  message_handlert &message_handler,
-  coverage_goalst &goals,
-  bool function_only=false,
-  bool ignore_trivial=false);
 
 bool instrument_cover_goals(
   const cmdlinet &,
