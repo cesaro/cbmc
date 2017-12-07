@@ -149,6 +149,7 @@ parse_coverage_criterion(const std::string &criterion_string)
 void parse_cover_options(const cmdlinet &cmdline, optionst &options)
 {
   options.set_option("cover", cmdline.get_values("cover"));
+  options.set_option("cover_functions", cmdline.get_values("cover_functions"));
   std::string cover_include_pattern =
     cmdline.get_value("cover-include-pattern");
   if(cmdline.isset("cover-function-only"))
@@ -260,6 +261,16 @@ bool instrument_cover_goals(
     function_filters.add(
       util_make_unique<include_pattern_filtert>(
         message_handler, cover_include_pattern));
+  }
+
+  // cover these functions only
+  std::list<std::string> cover_functions =
+    options.get_list_option("cover-functions");
+  if(!cover_functions.empty())
+  {
+    function_filters.add(
+      util_make_unique<include_function_list_filtert>(
+        message_handler, cover_functions));
   }
 
   if(options.get_bool_option("no-trivial-tests"))

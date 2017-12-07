@@ -14,6 +14,7 @@ Author: Daniel Kroening
 
 #include <regex>
 #include <memory>
+#include <set>
 
 #include <util/message.h>
 #include <util/invariant.h>
@@ -173,6 +174,28 @@ public:
 
 private:
   std::regex regex_matcher;
+};
+
+/// Filters functions that match the provided pattern
+class include_function_list_filtert : public function_filter_baset
+{
+public:
+  explicit include_function_list_filtert(
+    message_handlert &message_handler,
+    const std::list<std::string> &cover_functions)
+    : function_filter_baset(message_handler)
+  {
+    // Records the functions that need to be instrumented for coverage
+    for(auto &item : cover_functions)
+      functions.insert(item);
+  }
+
+  bool operator()(
+    const irep_idt &identifier,
+    const goto_functionst::goto_functiont &goto_function) const override;
+
+private:
+  std::set<std::string> functions;
 };
 
 /// Filters out trivial functions

@@ -57,6 +57,17 @@ bool include_pattern_filtert::operator()(
   return std::regex_match(id2string(identifier), string_matcher, regex_matcher);
 }
 
+/// Filter functions whose name match the regex
+/// \param identifier: a function name
+/// \param goto_function: a goto function
+/// \return: returns true if the function name matches
+bool include_function_list_filtert::operator()(
+  const irep_idt &identifier,
+  const goto_functionst::goto_functiont &goto_function) const
+{
+  return functions.find(id2string(identifier))!=functions.end();
+}
+
 /// Call a goto_program non-trivial if it has:
 ///  * Any declarations
 ///  * At least 2 branches
