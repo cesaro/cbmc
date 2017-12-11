@@ -61,6 +61,7 @@ $(BINARY_DIR)/%.class : $(SOURCE_DIR)/%.java $(BINARY_DIR)
 JAR := jar
 JARFLAGS := -cf
 
+.NOTPARALLEL: core-models.jar
 core-models.jar: $(all_classes)
 	$(JAR) $(JARFLAGS) $@ -C $(BINARY_DIR) .
 
