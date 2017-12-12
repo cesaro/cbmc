@@ -188,6 +188,7 @@ void build_goto_trace(
 
   const goto_trace_stept *end_ptr=nullptr;
   bool end_step_seen=false;
+  bool start_step_seen=false;
 
   for(symex_target_equationt::SSA_stepst::const_iterator
       it=target.SSA_steps.begin();
@@ -217,6 +218,11 @@ void build_goto_trace(
     else if(it->is_shared_read() || it->is_shared_write() ||
             it->is_atomic_end())
     {
+      // Shared r/w before the first step correspond to unused traces
+      // In general the first step in the trace is necessarily in time 0
+      if (!start_step_seen)
+        continue;
+      
       mp_integer time_before=current_time;
 
       if(it->is_shared_read() || it->is_shared_write())
@@ -255,6 +261,9 @@ void build_goto_trace(
     {
       continue;
     }
+
+    // Set start step to true if not previously seen
+    start_step_seen=true;
 
     goto_tracet::stepst &steps=time_map[current_time];
     steps.push_back(goto_trace_stept());

@@ -343,7 +343,10 @@ safety_checkert::resultt bmct::run(
     setup_unwind();
 
     // perform symbolic execution
-    symex(goto_functions);
+    // FIXME: we recommend to pass the option on the constructor
+    // currently done here since we want to have a minimal code change
+    // until this functionality is decided
+    symex(goto_functions, options.get_bool_option("atomic-nesting"));
 
     // add a partial ordering, if required
     if(equation.has_threads())

@@ -149,8 +149,8 @@ public class Object {
     
     public static void monitorenter(Object object)
     {
-      if (object == null) //FIXME : remove last entry of the stack trace
-        throw new NullPointerException();
+      // if (object == null) //FIXME : remove last entry of the stack trace
+      //   throw new NullPointerException();
       int id=CProver.getCurrentThreadID();
       CProver.atomicBegin();
       CProver.assume((object.monitorCount == 0)
