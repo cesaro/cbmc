@@ -18,17 +18,24 @@ void goto_symext::symex_atomic_begin(statet &state)
 
   // we don't allow any nesting of atomic sections
   if(state.atomic_section_id!=0)
-    throw "nested atomic section detected at "+
-      state.source.pc->source_location.as_string();
+  {
+    if(allow_atomic_nesting)
+      atomic_sections.push(state.atomic_section_id);
+    else
+      throw "nested atomic section detected at "+
+        state.source.pc->source_location.as_string();
+  }
+  else
+  {
+    state.atomic_section_id=++atomic_section_counter;
+    state.read_in_atomic_section.clear();
+    state.written_in_atomic_section.clear();
 
-  state.atomic_section_id=++atomic_section_counter;
-  state.read_in_atomic_section.clear();
-  state.written_in_atomic_section.clear();
-
-  target.atomic_begin(
+    target.atomic_begin(
       state.guard.as_expr(),
       atomic_section_counter,
       state.source);
+  }
 }
 
 void goto_symext::symex_atomic_end(statet &state)
@@ -40,7 +47,13 @@ void goto_symext::symex_atomic_end(statet &state)
     throw "ATOMIC_END unmatched"; // NOLINT(readability/throw)
 
   const unsigned atomic_section_id=state.atomic_section_id;
-  state.atomic_section_id=0;
+  if(allow_atomic_nesting && atomic_sections.size()>0)
+  {
+    atomic_sections.pop();
+    return;
+  }
+  else
+    state.atomic_section_id=0;
 
   for(goto_symex_statet::read_in_atomic_sectiont::const_iterator
       r_it=state.read_in_atomic_section.begin();

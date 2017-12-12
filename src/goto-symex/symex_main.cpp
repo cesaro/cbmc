@@ -172,8 +172,10 @@ void goto_symext::operator()(
 }
 
 /// symex from entry point
-void goto_symext::operator()(const goto_functionst &goto_functions)
+void goto_symext::operator()(const goto_functionst &goto_functions,
+                             bool atomic_nesting)
 {
+  allow_atomic_nesting=atomic_nesting;
   goto_functionst::function_mapt::const_iterator it=
     goto_functions.function_map.find(goto_functionst::entry_point());
 

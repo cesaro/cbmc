@@ -12,6 +12,8 @@ Author: Daniel Kroening, kroening@kroening.com
 #ifndef CPROVER_GOTO_SYMEX_GOTO_SYMEX_H
 #define CPROVER_GOTO_SYMEX_GOTO_SYMEX_H
 
+#include <stack>
+
 #include <util/options.h>
 #include <util/byte_operators.h>
 
@@ -53,6 +55,7 @@ public:
     ns(_ns),
     target(_target),
     atomic_section_counter(0),
+    allow_atomic_nesting(false),
     guard_identifier("goto_symex::\\guard")
   {
     options.set_option("simplify", true);
@@ -67,7 +70,8 @@ public:
 
   /** symex all at once, starting from entry point */
   virtual void operator()(
-    const goto_functionst &goto_functions);
+    const goto_functionst &goto_functions,
+    bool atomic_nesting=false);
 
   /** symex starting from given goto program */
   virtual void operator()(
@@ -104,6 +108,8 @@ protected:
   const namespacet &ns;
   symex_targett &target;
   unsigned atomic_section_counter;
+  bool allow_atomic_nesting;
+  std::stack<unsigned> atomic_sections;
 
   friend class symex_dereference_statet;
 
