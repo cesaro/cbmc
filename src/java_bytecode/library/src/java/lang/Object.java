@@ -37,9 +37,11 @@ public class Object {
     // Not present in the original Object class
     public int monitorCount;
     public int holdingThreadId;
+    public boolean ready;
     
     public Object() {
       monitorCount = 0;
+      ready = false;
     }
     
     public final Class<?> getClass() {
@@ -92,6 +94,7 @@ public class Object {
     // See implementation of notify
     public final void notifyAll()
     {
+      ready = true;
 /*        if (monitorCount == 0)
         {
             throw new IllegalMonitorStateException();
@@ -142,21 +145,32 @@ public class Object {
     }
 
     public final void wait() throws InterruptedException {
-        wait(0);
+      CProver.atomicBegin();
+      monitorexit(this);
+      CProver.atomicEnd();
+      CProver.atomicBegin();
+      CProver.assume(ready);
+      ready = false;
+      CProver.atomicEnd();
+      CProver.atomicBegin();
+      monitorenter(this);
+      CProver.atomicEnd();
+      // wait(0);
     }
 
     protected void finalize() throws Throwable { }
     
     public static void monitorenter(Object object)
     {
+      // FIXME: Temporarily removed functionality to simplify concurrency
       // if (object == null) //FIXME : remove last entry of the stack trace
       //   throw new NullPointerException();
-      int id=CProver.getCurrentThreadID();
+      // int id=CProver.getCurrentThreadID();
       CProver.atomicBegin();
-      CProver.assume((object.monitorCount == 0)
-        || (object.holdingThreadId==id));
+      CProver.assume(object.monitorCount == 0);
+      //  || (object.holdingThreadId==id));
       object.monitorCount++;
-      object.holdingThreadId=id;
+      // object.holdingThreadId=id;
       CProver.atomicEnd();
     }
 
