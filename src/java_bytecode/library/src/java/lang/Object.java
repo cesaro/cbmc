@@ -35,15 +35,15 @@ public class Object {
     // lock needed for synchronization in cbmc
     // used by monitorenter, monitorexit, wait, and notify
     // Not present in the original Object class
-    public int monitorCount;
-    public int holdingThreadId;
-    public boolean ready;
-    
+    public int __CPROVER_monitorCount;
+    public int __CPROVER_holdingThreadId;
+    public boolean __CPROVER_ready;
+
     public Object() {
-      monitorCount = 0;
-      ready = false;
+      __CPROVER_monitorCount = 0;
+      __CPROVER_ready = false;
     }
-    
+
     public final Class<?> getClass() {
       /*
        * MODELS LIBRARY {
@@ -94,7 +94,7 @@ public class Object {
     // See implementation of notify
     public final void notifyAll()
     {
-      ready = true;
+      __CPROVER_ready = true;
 /*        if (monitorCount == 0)
         {
             throw new IllegalMonitorStateException();
@@ -103,7 +103,7 @@ public class Object {
         monitorCount=0;
 
         // FIXME: notify should only wake up all threads
-        
+
         monitorCount=tempMonitorCount;*/
     }
 
@@ -113,14 +113,14 @@ public class Object {
       {
           throw new IllegalMonitorStateException();
       }
-      
+
       int tempMonitorCount = monitorCount;
       monitorCount=0;
 
       // FIXME: we require notifies to be able to interpose here
-        
+
       monitorCount=tempMonitorCount;*/
-      
+
       // FIXME: should only throw if the interrupted flag in Thread is enabled
       throw new InterruptedException();
     }
@@ -149,8 +149,8 @@ public class Object {
       monitorexit(this);
       CProver.atomicEnd();
       CProver.atomicBegin();
-      CProver.assume(ready);
-      ready = false;
+      CProver.assume(__CPROVER_ready);
+      __CPROVER_ready = false;
       CProver.atomicEnd();
       CProver.atomicBegin();
       monitorenter(this);
@@ -159,7 +159,7 @@ public class Object {
     }
 
     protected void finalize() throws Throwable { }
-    
+
     public static void monitorenter(Object object)
     {
       // FIXME: Temporarily removed functionality to simplify concurrency
@@ -167,9 +167,9 @@ public class Object {
       //   throw new NullPointerException();
       // int id=CProver.getCurrentThreadID();
       CProver.atomicBegin();
-      CProver.assume(object.monitorCount == 0);
+      CProver.assume(object.__CPROVER_monitorCount == 0);
       //  || (object.holdingThreadId==id));
-      object.monitorCount++;
+      object.__CPROVER_monitorCount++;
       // object.holdingThreadId=id;
       CProver.atomicEnd();
     }
@@ -184,8 +184,7 @@ public class Object {
         throw new IllegalMonitorStateException();
       }*/
       CProver.atomicBegin();
-      object.monitorCount--;
+      object.__CPROVER_monitorCount--;
       CProver.atomicEnd();
     }
-
 }
