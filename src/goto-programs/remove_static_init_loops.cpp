@@ -36,7 +36,7 @@ protected:
 /// unwind static initialization loops of Java enums as far as the enum has
 /// elements, thus flattening them completely
 /// \par parameters: goto_functions and options
-/// \return side effect is adding <clinit> loops to unwindset
+/// \return side effect is adding `<clinit>` loops to unwindset
 void remove_static_init_loopst::unwind_enum_static(
   const goto_functionst &goto_functions,
   optionst &options,
@@ -104,7 +104,7 @@ void remove_static_init_loopst::unwind_enum_static(
 /// this is the entry point for the removal of loops in static initialization
 /// code of Java enums
 /// \par parameters: symbol table, goto_functions and options
-/// \return side effect is adding <clinit> loops to unwindset
+/// \return side effect is adding `<clinit>` loops to unwindset
 void remove_static_init_loops(
   const goto_modelt &goto_model,
   optionst &options,
