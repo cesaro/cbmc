@@ -1,0 +1,7 @@
+KNOWNBUG
+A.class
+--function "A.me2:()V" --java-threading
+
+^EXIT=0$
+^SIGNAL=0$
+^VERIFICATION SUCCESSFUL
