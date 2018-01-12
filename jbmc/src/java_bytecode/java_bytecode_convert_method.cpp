@@ -1012,6 +1012,8 @@ codet java_bytecode_convert_methodt::convert_instructions(
     }
 
     if(i_it->statement=="athrow" ||
+       i_it->statement=="monitorenter" ||
+       i_it->statement=="monitorexit" ||
        i_it->statement=="putfield" ||
        i_it->statement=="getfield" ||
        i_it->statement=="checkcast" ||
@@ -1301,6 +1303,20 @@ codet java_bytecode_convert_methodt::convert_instructions(
       source_locationt loc=i_it->source_location;
       loc.set_function(method_id);
       c.add_source_location()=loc;
+    }
+    // replace calls to CProver.atomicBegin
+    else if(statement=="invokestatic" &&
+            id2string(arg0.get(ID_identifier))==
+            "java::org.cprover.CProver.atomicBegin:()V")
+    {
+      c=codet(ID_atomic_begin);
+    }
+    // replace calls to CProver.atomicEnd
+    else if(statement=="invokestatic" &&
+            id2string(arg0.get(ID_identifier))==
+            "java::org.cprover.CProver.atomicEnd:()V")
+    {
+      c=codet(ID_atomic_end);
     }
     else if(statement=="invokeinterface" ||
             statement=="invokespecial" ||
@@ -2338,33 +2354,30 @@ codet java_bytecode_convert_methodt::convert_instructions(
       results[0]=
         binary_predicate_exprt(op[0], ID_java_instanceof, arg0);
     }
-    else if(statement=="monitorenter")
+    else if(statement == "monitorenter" || statement == "monitorexit")
     {
+      std::string descriptor;
+      if(statement == "monitorenter")
+        descriptor =
+          "java::java.lang.Object.monitorenter:(Ljava/lang/Object;)V";
+      else
+        descriptor =
+          "java::java.lang.Object.monitorexit:(Ljava/lang/Object;)V";
+
       // becomes a function call
       code_typet type;
-      type.return_type()=void_typet();
+      type.return_type() = void_typet();
       type.parameters().resize(1);
-      type.parameters()[0].type()=java_reference_type(void_typet());
+      type.parameters()[0].type() = java_reference_type(void_typet());
+
       code_function_callt call;
-      call.function()=symbol_exprt("java::monitorenter", type);
+      call.function() = symbol_exprt(descriptor, type);
       call.lhs().make_nil();
       call.arguments().push_back(op[0]);
-      call.add_source_location()=i_it->source_location;
-      c=call;
-    }
-    else if(statement=="monitorexit")
-    {
-      // becomes a function call
-      code_typet type;
-      type.return_type()=void_typet();
-      type.parameters().resize(1);
-      type.parameters()[0].type()=java_reference_type(void_typet());
-      code_function_callt call;
-      call.function()=symbol_exprt("java::monitorexit", type);
-      call.lhs().make_nil();
-      call.arguments().push_back(op[0]);
-      call.add_source_location()=i_it->source_location;
-      c=call;
+      call.add_source_location() = i_it->source_location;
+      if(needed_lazy_methods && symbol_table.has_symbol(descriptor))
+        needed_lazy_methods->add_needed_method(descriptor);
+      c = call;
     }
     else if(statement=="swap")
     {
