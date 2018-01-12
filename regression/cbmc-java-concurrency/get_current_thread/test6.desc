@@ -1,0 +1,7 @@
+CORE
+A.class
+--function "A.me6:()V" --lazy-methods --classpath .:../../../src/java_bytecode/library/core-models.jar:.
+
+^EXIT=0$
+^SIGNAL=0$
+^VERIFICATION SUCCESSFUL
