@@ -251,14 +251,18 @@ protected:
     const irep_idt &basename);
 
   bool class_needs_clinit(const irep_idt &classname);
-  exprt get_or_create_clinit_wrapper(const irep_idt &classname);
-  codet get_clinit_call(const irep_idt &classname);
+  exprt get_or_create_clinit_wrapper(
+    const irep_idt &classname,
+    const irep_idt &caller_method_name);
+  codet get_clinit_call(
+    const irep_idt &classname,
+    const irep_idt &caller_method_name);
 
   bool is_method_inherited(
     const irep_idt &classname,
     const irep_idt &methodid) const;
 
-  enum class bytecode_write_typet { VARIABLE, ARRAY_REF, STATIC_FIELD, FIELD};
+  enum class bytecode_write_typet {VARIABLE, ARRAY_REF, STATIC_FIELD, FIELD};
   void save_stack_entries(
     const std::string &,
     const typet &,
