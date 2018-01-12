@@ -1149,6 +1149,8 @@ codet java_bytecode_convert_methodt::convert_instructions(
     }
 
     if(i_it->statement=="athrow" ||
+       i_it->statement=="monitorenter" ||
+       i_it->statement=="monitorexit" ||
        i_it->statement=="putfield" ||
        i_it->statement=="getfield" ||
        i_it->statement=="checkcast" ||
@@ -2498,11 +2500,17 @@ codet java_bytecode_convert_methodt::convert_instructions(
       type.parameters().resize(1);
       type.parameters()[0].type()=java_reference_type(void_typet());
       code_function_callt call;
-      call.function()=symbol_exprt("java::monitorenter", type);
+      call.function()=
+        symbol_exprt("java::java.lang.Object.monitorenter:(Ljava/lang/Object;)V", type);
       call.lhs().make_nil();
       call.arguments().push_back(op[0]);
       call.add_source_location()=i_it->source_location;
       c=call;
+      if(needed_lazy_methods)
+      {
+        needed_lazy_methods->add_needed_method(
+          "java::java.lang.Object.monitorenter:(Ljava/lang/Object;)V");
+      }
     }
     else if(statement=="monitorexit")
     {
@@ -2512,11 +2520,17 @@ codet java_bytecode_convert_methodt::convert_instructions(
       type.parameters().resize(1);
       type.parameters()[0].type()=java_reference_type(void_typet());
       code_function_callt call;
-      call.function()=symbol_exprt("java::monitorexit", type);
+      call.function()=
+        symbol_exprt("java::java.lang.Object.monitorexit:(Ljava/lang/Object;)V", type);
       call.lhs().make_nil();
       call.arguments().push_back(op[0]);
       call.add_source_location()=i_it->source_location;
       c=call;
+      if(needed_lazy_methods)
+      {
+        needed_lazy_methods->add_needed_method(
+          "java::java.lang.Object.monitorexit:(Ljava/lang/Object;)V");
+      }
     }
     else if(statement=="swap")
     {
@@ -2979,6 +2993,10 @@ void java_bytecode_convert_method(
     "nondetWithNull",
     "nondetWithoutNull",
     "notModelled",
+    "atomicBegin",
+    "atomicEnd"
+    "startThread",
+    "endThread"
   };
 
   if(std::regex_match(

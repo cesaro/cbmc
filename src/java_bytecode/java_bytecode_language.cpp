@@ -18,6 +18,7 @@ Author: Daniel Kroening, kroening@kroening.com
 #include <util/journalling_symbol_table.h>
 #include <util/string2int.h>
 #include <util/invariant.h>
+#include <util/std_types.h>
 #include <json/json_parser.h>
 
 #include <goto-programs/class_hierarchy.h>
