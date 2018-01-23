@@ -159,7 +159,7 @@ protected:
   void push(const exprt::operandst &o);
 
   /// Determines whether the `method` is a constructor or a static initializer,
-  /// by checking whether its name equals either <init> or <clinit>
+  /// by checking whether its name equals either `<init>` or `<clinit>`
   bool is_constructor(const class_typet::methodt &method);
 
   /// Returns true iff the slot index of the local variable of a method (coming
@@ -270,6 +270,24 @@ protected:
     const typet &,
     code_blockt &,
     exprt &);
+
+  enum class clinit_statest {NOT_INIT, IN_PROGRESS, RETURN};
+  static symbolt add_new_symbol(
+    symbol_table_baset& symbol_table,
+    const irep_idt& name,
+    const irep_idt& base_name,
+    const typet& type,
+    const exprt& value,
+    const bool is_static_lifetime,
+    const bool is_thread_local);
+
+  static equal_exprt gen_clinit_eqexpr(
+    const exprt& symbol_expr,
+    const clinit_statest state);
+
+  static code_assignt gen_clinit_assignexpr(
+    const exprt& symbol_expr,
+    const clinit_statest state);
 };
 
 #endif
