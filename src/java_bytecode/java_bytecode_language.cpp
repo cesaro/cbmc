@@ -19,6 +19,7 @@ Author: Daniel Kroening, kroening@kroening.com
 #include <util/string2int.h>
 #include <util/invariant.h>
 #include <util/std_types.h>
+#include <util/code_visitor.h>
 #include <json/json_parser.h>
 
 #include <goto-programs/class_hierarchy.h>
@@ -301,8 +302,18 @@ bool java_bytecode_languaget::typecheck(
     get_message_handler());
 
   // now typecheck all
-  return java_bytecode_typecheck(
+  bool res=java_bytecode_typecheck(
     symbol_table, get_message_handler(), string_refinement_enabled);
+  // Deal with org.cprover.CProver.startThread() and endThread()
+  code_visitort::callmapt map;
+  code_visitort::callbackt f=
+    std::bind(&java_bytecode_languaget::convert_threadblock,
+      this, std::placeholders::_1, std::ref(symbol_table));
+  map.insert({ID_function_call, f});
+  code_visitort thread_block_visitor(map);
+  thread_block_visitor.visit_symbols(symbol_table);
+
+  return res;
 }
 
 bool java_bytecode_languaget::generate_support_functions(
@@ -507,6 +518,127 @@ bool java_bytecode_languaget::convert_single_method(
   return true;
 }
 
+
+/// This function will recursively look for a thread block.
+/// In this context, a thread block is defined as any code
+/// that is in between a call to CProver.startThread:(I)V
+/// and CProver.endThread:(I)V. Once, a thread block is found
+/// the aforementioned calls are instrumented.
+///
+/// TODO: check for mismatches in startThread and endThread.
+///
+/// \param code: codet, should be ID_function_call
+/// \param symbol_table: a symbol table
+void java_bytecode_languaget::convert_threadblock(codet &code,
+  symbol_tablet &symbol_table)
+{
+  PRECONDITION(code.get_statement()==ID_function_call);
+  namespacet ns(symbol_table);
+  const std::string& next_thread_id="__CPROVER_next_thread_id";
+  const std::string& thread_id="__CPROVER_thread_id";
+  std::string fname="";
+  code_function_callt &f_code=to_code_function_call(code);
+  from_expr(f_code.function(), fname, ns);
+
+  // get function name and see if it
+  // matches org.cprover.start() or org.cprover.end()
+  if(fname == "org.cprover.CProver.startThread:(I)V")
+  {
+    INVARIANT(f_code.arguments().size()==1,
+      "ERROR: CProver.startThread invalid number of arguments");
+
+    // build id's, used to construct appropriate labels.
+    const exprt &expr=f_code.arguments()[0];
+    const std::string& v_str=expr.op0().get_string(ID_value);
+    mp_integer v=binary2integer(v_str, false);
+    // java does not have labels so this this is safe.
+    const std::string &lbl1="TS_1_"+integer2string(v);
+    const std::string &lbl2="TS_2_"+integer2string(v);
+
+    // instrument the following code:
+    //
+    // A: codet(ID_start_thread) --> TS_1_<ID>
+    // B: goto : TS_2_<ID>
+    // C: label (TS_1_<ID>)
+    // C.1 codet(ID_atomic_begin)
+    // D: __CPROVER_next_thread_id+=1;
+    // E: __CPROVER_thread_id=__CPROVER_next_thread_id
+    // F.1 codet(ID_atomic_end)
+
+    const symbolt& next_symbol=
+      add_or_get_symbol(symbol_table, next_thread_id, next_thread_id,
+        java_int_type(), from_integer(mp_zero, java_int_type()), false, true);
+    const symbolt& current_symbol=
+      add_or_get_symbol(symbol_table, thread_id, thread_id,
+        java_int_type(), from_integer(mp_zero, java_int_type()), true, true);
+
+    codet tmp_a(ID_start_thread);
+    tmp_a.set(ID_destination, lbl1);
+    code_gotot tmp_b(lbl2);
+    code_labelt tmp_c(lbl1);
+    tmp_c.op0()=codet(ID_skip);
+
+    exprt plus(ID_plus, java_int_type());
+    plus.copy_to_operands(next_symbol.symbol_expr());
+    plus.copy_to_operands(from_integer(1, java_int_type()));
+    code_assignt tmp_d(next_symbol.symbol_expr(), plus);
+    code_assignt tmp_e(current_symbol.symbol_expr(), next_symbol.symbol_expr());
+
+    code_blockt block;
+    block.add(tmp_a);
+    block.add(tmp_b);
+    block.add(tmp_c);
+    block.add(codet(ID_atomic_begin));
+    block.add(tmp_d);
+    block.add(tmp_e);
+    block.add(codet(ID_atomic_end));
+
+    block.add_source_location()=code.source_location();
+    code=block;
+  }
+  else if(fname == "org.cprover.CProver.endThread:(I)V")
+  {
+    INVARIANT(f_code.arguments().size()==1,
+      "ERROR: CProver.endThread invalid number of arguments");
+
+    // build id, used to construct appropriate labels.
+    const exprt &expr=f_code.arguments()[0];
+    const std::string& v_str=expr.op0().get_string(ID_value);
+    mp_integer v=binary2integer(v_str, false);
+    // java does not have labels so this this is safe.
+    const std::string &lbl2="TS_2_"+integer2string(v);
+
+    // instrument the following code:
+    // F: codet(ID_end_thread)
+    // G: label (TS_2_<ID>)
+    codet tmp_f(ID_end_thread);
+    code_labelt tmp_g(lbl2);
+    tmp_g.op0()=codet(ID_skip);
+
+    code_blockt block;
+    block.add(tmp_f);
+    block.add(tmp_g);
+
+    block.add_source_location()=code.source_location();
+    code=block;
+  }
+  else if(fname == "org.cprover.CProver.getCurrentThreadID:()I")
+  {
+    INVARIANT(f_code.arguments().size()==0,
+      "ERROR: CProver.getCurrentThreadID invalid number of arguments");
+
+    const symbolt& current_symbol=
+      add_or_get_symbol(symbol_table, thread_id, thread_id,
+        java_int_type(), from_integer(mp_zero, java_int_type()), true, true);
+
+    code_assignt code_assign(f_code.lhs(), current_symbol.symbol_expr());
+    code_assign.add_source_location()=code.source_location();
+    code=code_assign;
+  }
+  return;
+}
+
+
 bool java_bytecode_languaget::final(symbol_table_baset &symbol_table)
 {
   PRECONDITION(language_options_initialized);
@@ -598,3 +730,37 @@ bool java_bytecode_languaget::to_expr(
 java_bytecode_languaget::~java_bytecode_languaget()
 {
 }
+
+/// Utility method
+/// Adds a new symbol to the symbol table if
+/// it doesn't exist. Otherwise, returns
+/// existing one.
+symbolt java_bytecode_languaget::add_or_get_symbol(
+  symbol_tablet& symbol_table,
+  const irep_idt& name,
+  const irep_idt& base_name,
+  const typet& type,
+  const exprt& value,
+  const bool is_thread_local,
+  const bool is_static_lifetime)
+{
+  const symbolt* psymbol = nullptr;
+  namespacet ns(symbol_table);
+  ns.lookup(name, psymbol);
+  if(psymbol != nullptr)
+    return *psymbol;
+  symbolt new_symbol;
+  new_symbol.name=name;
+  new_symbol.pretty_name=name;
+  new_symbol.base_name=base_name;
+  new_symbol.type=type;
+  new_symbol.value=value;
+  new_symbol.is_lvalue=true;
+  new_symbol.is_state_var=true;
+  new_symbol.is_static_lifetime=is_static_lifetime;
+  new_symbol.is_thread_local=is_thread_local;
+  new_symbol.mode=ID_java;
+  symbol_table.add(new_symbol);
+  return new_symbol;
+}
+
