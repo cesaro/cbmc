@@ -67,6 +67,14 @@ $(patsubst %, %_clean, $(DIRS)):
 
 DOWNLOADER = lwp-download
 
+java-models-download:
+	@echo "Downloading java-models-library"
+	@$(DOWNLOADER) http://www.github.com/diffblue/java-models-library/archive/master.tar.gz
+	@tar xfz master.tar.gz
+	@cp -r java-models-library-master/src/main/java/java java_bytecode/library/src
+	@rm -r java-models-library-master
+	@rm master.tar.gz
+
 minisat2-download:
 	@echo "Downloading Minisat 2.2.1"
 	@$(DOWNLOADER) http://ftp.debian.org/debian/pool/main/m/minisat2/minisat2_2.2.1.orig.tar.gz

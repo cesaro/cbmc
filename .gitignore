@@ -65,6 +65,7 @@ libzip/
 zlib/
 minisat*/
 glucose-syrup/
+src/java_bytecode/library/src/java
 
 # flex/bison generated files
 src/ansi-c/ansi_c_lex.yy.cpp
