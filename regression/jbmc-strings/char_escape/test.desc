@@ -1,4 +1,4 @@
-CORE
+KNOWNBUG
 Test.class
 --refine-strings --function Test.test --cover location --trace --json-ui
 ^EXIT=0$
