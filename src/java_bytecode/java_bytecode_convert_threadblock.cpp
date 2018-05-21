@@ -17,8 +17,8 @@ Author: Kurt Degiogrio, kurt.degiorgio@diffblue.com
 #include <util/arith_tools.h>
 
 // Disable linter to allow an std::string constant.
-const std::string next_thread_id = CPROVER_PREFIX "_next_thread_id";// NOLINT(*)
-const std::string thread_id = CPROVER_PREFIX "_thread_id";// NOLINT(*)
+const std::string next_thread_id = CPROVER_PREFIX "next_thread_id";// NOLINT(*)
+const std::string thread_id = CPROVER_PREFIX "thread_id";// NOLINT(*)
 
 /// Adds a new symbol to the symbol table if it doesn't exist. Otherwise,
 /// returns the existing one.
@@ -105,7 +105,7 @@ static void instrument_start_thread(
 {
   PRECONDITION(f_code.arguments().size() == 1);
 
-  // Create global variable __CPROVER__next_thread_id. Used as a counter
+  // Create global variable __CPROVER_next_thread_id. Used as a counter
   // in-order to to assign ids to new threads.
   const symbolt &next_symbol =
     add_or_get_symbol(
@@ -113,7 +113,7 @@ static void instrument_start_thread(
         java_int_type(),
         from_integer(0, java_int_type()), false, true);
 
-  // Create thread-local variable __CPROVER__thread_id. Holds the id of
+  // Create thread-local variable __CPROVER_thread_id. Holds the id of
   // the thread.
   const symbolt &current_symbol =
     add_or_get_symbol(
@@ -132,8 +132,8 @@ static void instrument_start_thread(
   // B: codet(id=ID_goto, destination=__CPROVER_THREAD_EXIT_<ID>)
   // C: codet(id=ID_label, label=__CPROVER_THREAD_ENTRY_<ID>)
   // C.1: codet(id=ID_atomic_begin)
-  // D: CPROVER__next_thread_id += 1;
-  // E: __CPROVER__thread_id = __CPROVER__next_thread_id;
+  // D: CPROVER_next_thread_id += 1;
+  // E: __CPROVER_thread_id = __CPROVER_next_thread_id;
   // F: codet(id=ID_atomic_end)
 
   codet tmp_a(ID_start_thread);
@@ -241,13 +241,13 @@ static void instrument_getCurrentThreadID(
 /// marks the end of the thread body.  Both codet's will later be transformed
 /// (in goto_convertt) into the goto instructions START_THREAD and END_THREAD.
 ///
-/// Additionally the variable __CPROVER__thread_id (thread local) will store
+/// Additionally the variable __CPROVER_thread_id (thread local) will store
 /// the ID of the new thread. The new id is obtained by incrementing a global
-/// variable __CPROVER__next_thread_id.
+/// variable __CPROVER_next_thread_id.
 ///
 /// The ID of the thread is made accessible to the Java program by having calls
 /// to the function 'CProver.getCurrentThreadID()I' replaced by the variable
-/// __CPROVER__thread_id. We also perform this substitution in here. The
+/// __CPROVER_thread_id. We also perform this substitution in here. The
 /// substitution that we perform here assumes that calls to
 /// getCurrentThreadID() are ONLY made in the RHS of an expression.
 ///
@@ -266,8 +266,8 @@ static void instrument_getCurrentThreadID(
 /// codet(id=ID_goto, destination=__CPROVER_THREAD_EXIT_333)
 /// codet(id=ID_label, label=__CPROVER_THREAD_ENTRY_333)
 /// codet(id=ID_atomic_begin)
-/// __CPROVER__next_thread_id += 1;
-/// __CPROVER__thread_id = __CPROVER__next_thread_id;
+/// __CPROVER_next_thread_id += 1;
+/// __CPROVER_thread_id = __CPROVER_next_thread_id;
 /// ... // thread body
 /// codet(id=ID_end_thread)
 /// codet(id=ID_label, label=__CPROVER_THREAD_EXIT_333)
