@@ -364,6 +364,23 @@ void java_bytecode_convert_method_lazy(
   else
     member_type.set_access(ID_default);
 
+  if (m.is_synchronized)
+    member_type.set(ID_is_synchronized, true);
+  if (m.is_static)
+    member_type.set(ID_is_static, true);
+
+  if(method_symbol.base_name=="<init>")
+  {
+    method_symbol.pretty_name=
+      id2string(class_symbol.pretty_name)+"."+
+      id2string(class_symbol.base_name)+"()";
+    member_type.set(ID_constructor, true);
+  }
+  else
+    method_symbol.pretty_name=
+      id2string(class_symbol.pretty_name)+"."+
+      id2string(m.base_name)+"()";
+
   // do we need to add 'this' as a parameter?
   if(!m.is_static)
   {
@@ -1475,7 +1492,8 @@ codet java_bytecode_convert_methodt::convert_instructions(
       // returning the same call otherwise
       c=string_preprocess.replace_character_call(call);
 
-      if(!use_this)
+      if(!use_this && id2string(arg0.get(ID_identifier))!=
+        "java::org.cprover.CProver.atomicEnd:()V")
       {
         codet clinit_call=get_clinit_call(arg0.get(ID_C_class));
         if(clinit_call.get_statement()!=ID_skip)

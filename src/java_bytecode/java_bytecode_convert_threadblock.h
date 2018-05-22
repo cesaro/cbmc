@@ -12,4 +12,6 @@ Author: Kurt Degiogrio, kurt.degiorgio@diffblue.com
 
 void convert_threadblock(symbol_tablet &symbol_table);
 
+void convert_synchronized_methods(symbol_tablet &symbol_table);
+
 #endif

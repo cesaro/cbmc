@@ -7,6 +7,7 @@ Author: Daniel Kroening, kroening@kroening.com
 \*******************************************************************/
 
 #include "java_bytecode_language.h"
+#include "java_bytecode_synchronize.h"
 
 #include <string>
 
@@ -753,9 +754,12 @@ bool java_bytecode_languaget::typecheck(
   bool res = java_bytecode_typecheck(
     symbol_table, get_message_handler(), string_refinement_enabled);
 
-  // now instrument thread-blocks
+  // now instrument thread-blocks and synchronized methods
   if(threading_support)
+  {
     convert_threadblock(symbol_table);
+    convert_synchronized_methods(symbol_table);
+  }
 
   return res;
 }
@@ -1017,6 +1021,7 @@ bool java_bytecode_languaget::convert_single_method(
 bool java_bytecode_languaget::final(symbol_table_baset &symbol_table)
 {
   PRECONDITION(language_options_initialized);
+
   return false;
 }
 

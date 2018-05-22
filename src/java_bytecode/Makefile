@@ -14,6 +14,7 @@ SRC = bytecode_info.cpp \
       java_bytecode_language.cpp \
       java_bytecode_parse_tree.cpp \
       java_bytecode_parser.cpp \
+      java_bytecode_synchronize.cpp \
       java_bytecode_typecheck.cpp \
       java_bytecode_typecheck_code.cpp \
       java_bytecode_typecheck_expr.cpp \
