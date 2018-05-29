@@ -75,4 +75,15 @@ void java_root_class_init(
   const std::size_t lock_nb=root_type.component_number("@lock");
   const typet &lock_type=root_type.components()[lock_nb].type();
   jlo.operands()[lock_nb]=from_integer(lock, lock_type);
+
+  // Check if the 'monitorCount' component exists and initialize it.
+  // This field is only present when the java core models are embedded. It is
+  // used to implement a critical section, which is necessary to support
+  // concurrency.
+  if(root_type.has_component("monitorCount"))
+  {
+    const std::size_t count_nb=root_type.component_number("monitorCount");
+    const typet &count_type=root_type.components()[count_nb].type();
+    jlo.operands()[count_nb]=from_integer(0, count_type);
+  }
 }
