@@ -1,0 +1,7 @@
+CORE
+A.class
+--lazy-methods --load-core-models --show-goto-functions
+ATOMIC_BEGIN
+ATOMIC_END
+--
+--

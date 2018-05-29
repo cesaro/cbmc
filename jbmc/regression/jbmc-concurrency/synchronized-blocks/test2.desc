@@ -1,0 +1,8 @@
+CORE
+A.class
+--load-core-models
+^EXIT=0$
+^SIGNAL=0$
+^VERIFICATION SUCCESSFUL$
+--
+--

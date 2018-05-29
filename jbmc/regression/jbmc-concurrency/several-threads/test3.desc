@@ -1,0 +1,7 @@
+CORE
+A.class
+--function A.me3 --lazy-methods --load-core-models --java-threading --unwind 3
+
+^EXIT=0$
+^SIGNAL=0$
+^VERIFICATION SUCCESSFUL

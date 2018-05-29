@@ -1,0 +1,8 @@
+CORE
+A.class
+--lazy-methods --load-core-models --lazy-methods
+^EXIT=0$
+^SIGNAL=0$
+^VERIFICATION SUCCESSFUL$
+--
+--

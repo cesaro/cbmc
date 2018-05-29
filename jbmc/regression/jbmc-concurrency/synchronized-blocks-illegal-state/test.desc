@@ -1,0 +1,8 @@
+CORE
+Sync.class --lazy-methods --load-core-models
+VERIFICATION SUCCESSFUL
+--
+^warning: ignoring
+--
+This checks that an extra monitorexit will always trigger an IllegalMonitorException.
+Note: requires jasmin to compile the bytecode instructions
