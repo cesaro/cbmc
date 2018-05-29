@@ -1078,6 +1078,18 @@ void java_object_factoryt::gen_nondet_struct_init(
     {
       continue;
     }
+    else if(name == "monitorCount")
+    {
+      // Zero-initialize 'monitorCount' field as it is not meant to be nondet.
+      // This field is only present when the java core models are embedded. It
+      // is used to implement a critical section, which is necessary to support
+      // concurrency.
+      if(update_in_place==update_in_placet::MUST_UPDATE_IN_PLACE)
+        continue;
+      code_assignt code(me, from_integer(0, me.type()));
+      code.add_source_location() = loc;
+      assignments.copy_to_operands(code);
+    }
     else
     {
       INVARIANT(!name.empty(), "Each component of a struct must have a name");
