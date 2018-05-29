@@ -1,0 +1,9 @@
+CORE
+A.class
+--lazy-methods
+^EXIT=0$
+^SIGNAL=0$
+^VERIFICATION SUCCESSFUL$
+--
+--
+tests that synronosation blocks do not cause issues without models flag

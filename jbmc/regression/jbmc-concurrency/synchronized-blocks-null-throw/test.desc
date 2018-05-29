@@ -1,0 +1,7 @@
+CORE
+Sync.class --load-core-models
+VERIFICATION SUCCESSFUL
+--
+^warning: ignoring
+--
+This checks that the synchronized keyword on a null object will always throw.
