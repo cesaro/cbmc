@@ -1,0 +1,7 @@
+CORE
+Sync.class --load-core-models --lazy-loading --java-threading
+VERIFICATION SUCCESSFUL
+--
+^warning: ignoring
+--
+Checks all possible paths to ensure a synchronized method does not end in an illegal monitor state.
