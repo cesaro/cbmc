@@ -540,7 +540,7 @@ static codet make_allocate_code(const symbol_exprt &lhs, const exprt &size)
 /// cprover_associate_length_to_array_func(
 ///   *string_data_pointer, tmp_object_factory);
 /// arg = { .@java.lang.Object={
-///   .@class_identifier=\"java::java.lang.String\", .@lock=false },
+///   .@class_identifier=\"java::java.lang.String\" },
 ///   .length=tmp_object_factory,
 ///   .data=*string_data_pointer };
 /// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -574,11 +574,10 @@ codet initialize_nondet_string_struct(
     ? "java::java.lang.String"
     : "java::" + id2string(struct_type.get_tag());
 
-  // @lock = false:
   const symbol_typet jlo_symbol("java::java.lang.Object");
   const struct_typet &jlo_type = to_struct_type(ns.follow(jlo_symbol));
   struct_exprt jlo_init(jlo_symbol);
-  java_root_class_init(jlo_init, jlo_type, false, class_id);
+  java_root_class_init(jlo_init, jlo_type, class_id);
 
   struct_exprt struct_expr(obj.type());
   struct_expr.copy_to_operands(jlo_init);
@@ -1071,10 +1070,6 @@ void java_object_factoryt::gen_nondet_struct_init(
     member_exprt me(expr, name, component_type);
 
     if(name=="@class_identifier")
-    {
-      continue;
-    }
-    else if(name=="@lock")
     {
       continue;
     }
