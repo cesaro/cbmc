@@ -22,9 +22,9 @@ Author: Daniel Kroening, kroening@kroening.com
 
 #include <goto-programs/class_hierarchy.h>
 
+#include "java_bytecode_concurrency_instrumentation.h"
 #include "java_bytecode_convert_class.h"
 #include "java_bytecode_convert_method.h"
-#include "java_bytecode_convert_threadblock.h"
 #include "java_bytecode_internal_additions.h"
 #include "java_bytecode_instrument.h"
 #include "java_bytecode_typecheck.h"
@@ -44,7 +44,6 @@ Author: Daniel Kroening, kroening@kroening.com
 void java_bytecode_languaget::get_language_options(const cmdlinet &cmd)
 {
   assume_inputs_non_null=cmd.isset("java-assume-inputs-non-null");
-  java_class_loader.set_use_core_models(!cmd.isset("no-core-models"));
   string_refinement_enabled=cmd.isset("refine-strings");
   throw_runtime_exceptions=cmd.isset("java-throw-runtime-exceptions");
   if(cmd.isset("java-max-input-array-length"))
@@ -756,9 +755,12 @@ bool java_bytecode_languaget::typecheck(
   bool res = java_bytecode_typecheck(
     symbol_table, get_message_handler(), string_refinement_enabled);
 
-  // now instrument thread-blocks
+  // now instrument thread-blocks and synchronized methods.
   if(threading_support)
+  {
     convert_threadblock(symbol_table);
+    convert_synchronized_methods(symbol_table);
+  }
 
   return res;
 }

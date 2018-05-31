@@ -4,6 +4,7 @@ use subs;
 use strict;
 use warnings;
 use File::Basename;
+use Term::ANSIColor;
 
 use Cwd;
 
@@ -66,8 +67,8 @@ sub load($) {
   return @data;
 }
 
-sub test($$$$$$$$$) {
-  my ($name, $test, $t_level, $cmd, $ign, $dry_run, $defines, $include_tags, $exclude_tags) = @_;
+sub test($$$$$$$$$$) {
+  my ($name, $test, $t_level, $cmd, $ign, $dry_run, $defines, $include_tags, $exclude_tags, $output_suffix) = @_;
   my ($level_and_tags, $input, $options, $grep_options, @results) = load("$test");
   my @keys = keys %{$defines};
   foreach my $key (@keys) {
@@ -115,7 +116,12 @@ sub test($$$$$$$$$) {
 
   my $descriptor = basename($test);
   my $output = $descriptor;
-  $output =~ s/\.[^.]*$/.out/;
+  $output =~ s/\.[^.]*$//;
+  if($output_suffix) {
+    $output .= "-";
+    $output .= $output_suffix;
+  }
+  $output .= ".out";
 
   if($output eq $input) {
     print("Error in test file -- $test\n");
@@ -269,7 +275,10 @@ Usage: test.pl -c CMD [OPTIONS] [DIRECTORIES ...]
                  test descriptors
   -I <tag>   run only tests that have the given secondary tag. Can be repeated.
   -X <tag>   exclude tests that have the given secondary tag. Can be repeated.
-
+  -s <suffix>  append <suffix> to all output and log files. Enables concurrent
+             testing of the same desc file with different commands or options,
+             as runs with different suffixes will operate independently and keep
+             independent logs.
 
 test.pl expects a test.desc file in each subdirectory. The file test.desc
 follows the format specified below. Any line starting with // will be ignored.
@@ -304,9 +313,9 @@ use Getopt::Std;
 use Getopt::Long qw(:config pass_through bundling);
 $main::VERSION = 0.1;
 $Getopt::Std::STANDARD_HELP_VERSION = 1;
-our ($opt_c, $opt_i, $opt_j, $opt_n, $opt_p, $opt_h, $opt_C, $opt_T, $opt_F, $opt_K, %defines, @include_tags, @exclude_tags); # the variables for getopt
+our ($opt_c, $opt_i, $opt_j, $opt_n, $opt_p, $opt_h, $opt_C, $opt_T, $opt_F, $opt_K, $opt_s, %defines, @include_tags, @exclude_tags); # the variables for getopt
 GetOptions("D=s" => \%defines, "X=s" => \@exclude_tags, "I=s" => \@include_tags);
-getopts('c:i:j:nphCTFK') or &main::HELP_MESSAGE(\*STDOUT, "", $main::VERSION, "");
+getopts('c:i:j:nphCTFKs:') or &main::HELP_MESSAGE(\*STDOUT, "", $main::VERSION, "");
 $opt_c or &main::HELP_MESSAGE(\*STDOUT, "", $main::VERSION, "");
 $opt_j = $opt_j || $ENV{'TESTPL_JOBS'} || 0;
 if($opt_j && $opt_j != 1 && !$has_thread_pool) {
@@ -321,9 +330,16 @@ $t_level += 4 if($opt_F);
 $t_level += 8 if($opt_K);
 $t_level += 1 if($opt_C || 0 == $t_level);
 my $dry_run = $opt_n;
+my $log_suffix = $opt_s;
 
+my $logfile_name = "tests";
+if($log_suffix) {
+  $logfile_name .= "-";
+  $logfile_name .= $log_suffix;
+}
+$logfile_name .= ".log";
 
-open LOG,">tests.log";
+open LOG, (">" . $logfile_name);
 
 print "Loading\n";
 my @tests = @ARGV != 0 ? @ARGV : dirs();
@@ -349,7 +365,7 @@ sub do_test($)
     defined($pool) or print "  Running $files[$_]";
     my $start_time = time();
     $failed_skipped = test(
-      $test, $files[$_], $t_level, $opt_c, $opt_i, $dry_run, \%defines, \@include_tags, \@exclude_tags);
+      $test, $files[$_], $t_level, $opt_c, $opt_i, $dry_run, \%defines, \@include_tags, \@exclude_tags, $log_suffix);
     my $runtime = time() - $start_time;
 
     lock($skips);
@@ -358,10 +374,10 @@ sub do_test($)
       $skips++;
       print "  [SKIPPED]\n";
     } elsif(0 == $failed_skipped) {
-      print "  [OK] in $runtime seconds\n";
+      print "  [" . colored("OK", "green") . "] in $runtime seconds\n";
     } else {
       $failures++;
-      print "  [FAILED]\n";
+      print "  [" . colored("FAILED", "red") . "]\n";
     }
   }
 }
@@ -393,9 +409,9 @@ defined($pool) and $pool->join();
 print "\n";
 
 if($failures == 0) {
-  print "All tests were successful";
+  print colored("All tests were successful", "green");
 } else {
-  print "Tests failed\n";
+  print colored("Tests failed", "red") . "\n";
   print "  $failures of $count " . (1==$count?"test":"tests") . " failed";
 }
 print ", $skips " . (1==$skips?"test":"tests") . " skipped" if($skips > 0);

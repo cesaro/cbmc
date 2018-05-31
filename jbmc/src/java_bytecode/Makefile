@@ -8,7 +8,7 @@ SRC = bytecode_info.cpp \
       jar_file.cpp \
       java_bytecode_convert_class.cpp \
       java_bytecode_convert_method.cpp \
-      java_bytecode_convert_threadblock.cpp \
+      java_bytecode_concurrency_instrumentation.cpp \
       java_bytecode_instrument.cpp \
       java_bytecode_internal_additions.cpp \
       java_bytecode_language.cpp \
@@ -49,7 +49,7 @@ include ../$(CPROVER_DIR)/src/common
 
 CLEANFILES = java_bytecode$(LIBEXT)
 
-all: java_bytecode$(LIBEXT)
+all: library java_bytecode$(LIBEXT)
 
 clean: clean_library
 
@@ -57,10 +57,10 @@ clean: clean_library
 clean_library:
 	$(MAKE) clean -C library
 
-library/java_core_models.inc:
-	$(MAKE) -C library java_core_models.inc
+.PHONY: library
+library:
+	$(MAKE) -C library
 
-java_class_loader$(OBJEXT): library/java_core_models.inc
 ###############################################################################
 
 java_bytecode$(LIBEXT): $(OBJ)

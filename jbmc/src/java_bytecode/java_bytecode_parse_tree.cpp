@@ -18,28 +18,6 @@ Author: Daniel Kroening, kroening@kroening.com
 
 #include "expr2java.h"
 
-void java_bytecode_parse_treet::classt::swap(
-  classt &other)
-{
-  other.name.swap(name);
-  other.extends.swap(extends);
-  std::swap(other.is_enum, is_enum);
-  std::swap(other.enum_elements, enum_elements);
-  std::swap(other.is_abstract, is_abstract);
-  std::swap(other.is_public, is_public);
-  std::swap(other.is_protected, is_protected);
-  std::swap(other.is_private, is_private);
-  std::swap(other.is_final, is_final);
-  std::swap(other.signature, signature);
-  other.implements.swap(implements);
-  other.fields.swap(fields);
-  other.methods.swap(methods);
-  other.annotations.swap(annotations);
-  std::swap(
-    other.attribute_bootstrapmethods_read, attribute_bootstrapmethods_read);
-  std::swap(other.lambda_method_handle_map, lambda_method_handle_map);
-}
-
 void java_bytecode_parse_treet::output(std::ostream &out) const
 {
   parsed_class.output(out);
@@ -121,23 +99,30 @@ void java_bytecode_parse_treet::annotationt::element_value_pairt::output(
   out << expr2java(value, ns);
 }
 
-bool java_bytecode_parse_treet::does_annotation_exist(
+/// Find an annotation given its name
+/// \param annotations: A vector of annotationt
+/// \param annotation_type_name: An irep_idt representing the name of the
+///   annotation class, e.g. java::java.lang.SuppressWarnings
+/// \return The first annotation with the given name in annotations if one
+///    exists, an empty optionalt otherwise.
+optionalt<java_bytecode_parse_treet::annotationt>
+java_bytecode_parse_treet::find_annotation(
   const annotationst &annotations,
   const irep_idt &annotation_type_name)
 {
-  return
-    std::find_if(
-      annotations.begin(),
-      annotations.end(),
-      [&annotation_type_name](const annotationt &annotation)
-      {
-        if(annotation.type.id() != ID_pointer)
-          return false;
-        typet type = annotation.type.subtype();
-        return
-          type.id() == ID_symbol
-          && to_symbol_type(type).get_identifier() == annotation_type_name;
-      }) != annotations.end();
+  const auto annotation_it = std::find_if(
+    annotations.begin(),
+    annotations.end(),
+    [&annotation_type_name](const annotationt &annotation) {
+      if(annotation.type.id() != ID_pointer)
+        return false;
+      const typet &type = annotation.type.subtype();
+      return type.id() == ID_symbol &&
+             to_symbol_type(type).get_identifier() == annotation_type_name;
+    });
+  if(annotation_it == annotations.end())
+    return {};
+  return *annotation_it;
 }
 
 void java_bytecode_parse_treet::methodt::output(std::ostream &out) const

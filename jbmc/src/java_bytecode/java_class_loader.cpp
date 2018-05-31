@@ -17,15 +17,6 @@ Author: Daniel Kroening, kroening@kroening.com
 
 #include "java_bytecode_parser.h"
 
-#include "library/java_core_models.inc"
-
-/// This variable stores the data of the file core-models.jar. The macro
-/// JAVA_CORE_MODELS_SIZE is defined in the header java_core_models.inc, which
-/// gets generated at compile time by running a small utility (converter.cpp) on
-/// actual .jar file. The number of bytes in the variable is
-/// JAVA_CORE_MODELS_SIZE, another macro defined in java_core_models.inc.
-unsigned char java_core_models[] = { JAVA_CORE_MODELS_DATA };
-
 java_class_loadert::parse_tree_with_overlayst &java_class_loadert::operator()(
   const irep_idt &class_name)
 {
@@ -97,17 +88,15 @@ optionalt<java_bytecode_parse_treet> java_class_loadert::get_class_from_jar(
   if(!data.has_value())
     return {};
 
-  java_bytecode_parse_treet parse_tree;
   std::istringstream istream(*data);
-  if(java_bytecode_parse(istream, parse_tree, get_message_handler()))
-    return {};
-  return parse_tree;
+  return java_bytecode_parse(istream, get_message_handler());
 }
 
 static bool is_overlay_class(const java_bytecode_parse_treet::classt &c)
 {
-  return java_bytecode_parse_treet::does_annotation_exist(
-    c.annotations, ID_overlay_class);
+  return java_bytecode_parse_treet::find_annotation(
+           c.annotations, ID_overlay_class)
+    .has_value();
 }
 
 /// Check through all the places class parse trees can appear and returns the
@@ -136,28 +125,7 @@ java_class_loadert::get_parse_tree(
     optionalt<java_bytecode_parse_treet> parse_tree =
       get_class_from_jar(class_name, jar_file, *index, class_loader_limit);
     if(parse_tree)
-      parse_trees.push_back(*parse_tree);
-  }
-
-  // Then add core models
-  if(use_core_models)
-  {
-    // Add internal jar file. The name is used to load it once only and
-    // reference it later.
-    std::string core_models = "core-models.jar";
-    jar_pool(
-      class_loader_limit, core_models, java_core_models, JAVA_CORE_MODELS_SIZE);
-
-    // This does not read from the jar file but from the jar_filet object we
-    // just created
-    jar_index_optcreft index = read_jar_file(class_loader_limit, core_models);
-    if(index)
-    {
-      optionalt<java_bytecode_parse_treet> parse_tree =
-        get_class_from_jar(class_name, core_models, *index, class_loader_limit);
-      if(parse_tree)
-        parse_trees.push_back(*parse_tree);
-    }
+      parse_trees.emplace_back(std::move(*parse_tree));
   }
 
   // Then add everything on the class path
@@ -171,7 +139,7 @@ java_class_loadert::get_parse_tree(
       optionalt<java_bytecode_parse_treet> parse_tree =
         get_class_from_jar(class_name, cp_entry, *index, class_loader_limit);
       if(parse_tree)
-        parse_trees.push_back(*parse_tree);
+        parse_trees.emplace_back(std::move(*parse_tree));
     }
     else
     {
@@ -192,9 +160,10 @@ java_class_loadert::get_parse_tree(
         debug()
           << "Getting class `" << class_name << "' from file " << full_path
           << eom;
-        java_bytecode_parse_treet parse_tree;
-        if(!java_bytecode_parse(full_path, parse_tree, get_message_handler()))
-          parse_trees.push_back(std::move(parse_tree));
+        optionalt<java_bytecode_parse_treet> parse_tree =
+          java_bytecode_parse(full_path, get_message_handler());
+        if(parse_tree)
+          parse_trees.emplace_back(std::move(*parse_tree));
       }
     }
   }

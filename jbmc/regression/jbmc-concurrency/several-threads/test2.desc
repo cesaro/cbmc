@@ -1,0 +1,6 @@
+CORE
+A.class
+--function A.me2 --lazy-methods --load-core-models --java-threading
+
+^SIGNAL=0$
+^VERIFICATION FAILED
